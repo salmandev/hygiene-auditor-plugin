@@ -1,0 +1,6 @@
+<?jelly escape-by-default='true'?>
+<div>
+    Read-only, evidence-based auditor that reports likely-unused credentials, stale jobs, offline agents,
+    unreferenced shared libraries and orphaned plugin data, each with a confidence level and the evidence behind it.
+    It never deletes or modifies anything.
+</div>
