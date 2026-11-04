@@ -62,7 +62,7 @@ body:has(.ha-page) { background: var(--ha-bg); }
 .ha-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--ha-accent-line) 45%, transparent); outline-offset: 2px; }
 .ha-btn-primary { background: var(--ha-accent); border-color: var(--ha-accent); color: var(--ha-accent-contrast); padding: 10px 18px; }
 .ha-page a.ha-btn-primary, .ha-page a.ha-btn-primary:visited { color: var(--ha-accent-contrast); }
-.ha-btn-primary:hover { background: color-mix(in srgb, var(--ha-accent) 88%, black); border-color: transparent; color: var(--ha-accent-contrast); }
+.ha-btn-primary:hover { background: color-mix(in srgb, var(--ha-accent) 88%, var(--ha-text)); border-color: transparent; color: var(--ha-accent-contrast); }
 .ha-btn-danger { color: var(--ha-high-fg); }
 .ha-btn-sm { padding: 7px 12px; font-size: 13px; }
 
@@ -71,7 +71,7 @@ body:has(.ha-page) { background: var(--ha-bg); }
 .ha-menu > summary { list-style: none; }
 .ha-menu > summary::-webkit-details-marker { display: none; }
 .ha-menu[open] > summary { border-color: var(--ha-muted); }
-.ha-menu-list { position: absolute; right: 0; z-index: 20; min-width: 15rem; margin-top: 6px; padding: 6px; background: var(--ha-card); border: 1px solid var(--ha-border); border-radius: 12px; box-shadow: 0 10px 30px rgba(16, 24, 40, .14); display: grid; }
+.ha-menu-list { position: absolute; right: 0; z-index: 20; min-width: 15rem; margin-top: 6px; padding: 6px; background: var(--ha-card); border: 1px solid var(--ha-border); border-radius: 12px; box-shadow: 0 10px 30px color-mix(in srgb, var(--ha-text) 14%, transparent); display: grid; }
 .ha-menu-list a { padding: 8px 10px; border-radius: 8px; color: var(--ha-text); text-decoration: none; font-size: 14px; }
 .ha-menu-list a:hover { background: var(--ha-low-bg); }
 .ha-menu-list .ha-menu-head { padding: 8px 10px 4px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ha-muted); }
