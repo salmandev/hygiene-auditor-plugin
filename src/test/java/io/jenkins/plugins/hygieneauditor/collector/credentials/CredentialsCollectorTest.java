@@ -147,6 +147,29 @@ class CredentialsCollectorTest {
     }
 
     @Test
+    void aRootCredentialIsReportedOnceNotOncePerFolder() throws Exception {
+        // Found by running the plugin in Docker: with folders present, inherited stores were counted under each folder.
+        add(j.jenkins, "root-orphan");
+        Folder a = j.jenkins.createProject(Folder.class, "a");
+        j.jenkins.createProject(Folder.class, "b");
+        add(a, "folder-orphan");
+        List<Finding> found = t.scan(collector, 0);
+        assertEquals(
+                List.of(":_:root-orphan"),
+                found.stream()
+                        .map(f -> f.subject().fullName())
+                        .filter(n -> n.endsWith("root-orphan"))
+                        .toList());
+        assertEquals(
+                List.of("a:_:folder-orphan"),
+                found.stream()
+                        .map(f -> f.subject().fullName())
+                        .filter(n -> n.endsWith("folder-orphan"))
+                        .toList());
+        assertEquals(2, found.size(), found.toString());
+    }
+
+    @Test
     void recentFingerprintUseMeansInUseEvenWithoutStaticReference() throws Exception {
         UsernamePasswordCredentialsImpl c = add(j.jenkins, "runtime-only");
         FreeStyleProject p = j.createFreeStyleProject("p");

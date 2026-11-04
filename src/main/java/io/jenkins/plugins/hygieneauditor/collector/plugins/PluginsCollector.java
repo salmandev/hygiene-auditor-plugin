@@ -1,5 +1,6 @@
 package io.jenkins.plugins.hygieneauditor.collector.plugins;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.ExtensionList;
@@ -32,10 +33,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.stream.XMLStreamException;
@@ -45,13 +48,14 @@ import jenkins.model.Jenkins;
  * Two kinds of finding about plugins.
  *
  * <ul>
- *   <li>{@code plugin.orphaned_data}: Jenkins' own {@link OldDataMonitor} reports stored data it cannot read (typically
- *       written by a plugin that is no longer installed). We add the name of the missing plugin when the item's
- *       configuration still says which plugin wrote it.
- *   <li>{@code plugin.needs_review}: an installed, enabled, non-bundled plugin that nothing depends on and that leaves
- *       no <em>observable</em> trace: no {@code plugin="…"} stamp in any configuration, no persisted global
- *       configuration file, and no step in the latest run of any pipeline job. <b>Always LOW confidence and INFO
- *       severity:</b> a great many plugins (themes, UI helpers, build-time tools) legitimately leave none.
+ *   <li>{@code plugin.orphaned_data}: configuration that a no-longer-installed plugin wrote. Two independent sources,
+ *       which corroborate each other: Jenkins' {@link OldDataMonitor} (unreadable data; it does <em>not</em> report
+ *       items inside folders), and our own scan for {@code plugin="name@version"} stamps naming a plugin that is not
+ *       installed (works everywhere, but a renamed plugin looks the same).
+ *   <li>{@code plugin.needs_review}: an installed, enabled, non-bundled plugin that contains code, that nothing depends
+ *       on, and that leaves no <em>observable</em> trace: no stamp, no class named in any configuration, no persisted
+ *       global settings file, no step in the latest run of any pipeline job. <b>Always LOW confidence and INFO
+ *       severity:</b> a great many plugins legitimately leave none.
  * </ul>
  *
  * As elsewhere, nothing is emitted unless every source was read.
@@ -60,9 +64,22 @@ import jenkins.model.Jenkins;
 public class PluginsCollector extends HygieneCollector {
     public static final String ID = "plugins";
     private static final String SRC_ORPHAN = "old-data-monitor";
+    private static final String SRC_STAMP = "plugin-stamps";
     private static final String SRC = "plugin-footprint";
+    private static final int MAX_CLASSES = 20_000;
     private static final Pattern MISSING_CLASS = Pattern.compile("CannotResolveClassException:\\s*([\\w.$]+)");
     private static final Pattern CLASS_FILE = Pattern.compile("[A-Za-z0-9_$]+(\\.[A-Za-z0-9_$]+)+");
+
+    /** Maps a class name to the short name of the plugin that owns it, or null. Replaceable in tests. */
+    private final Function<String, String> classOwner;
+
+    public PluginsCollector() {
+        this(null);
+    }
+
+    PluginsCollector(@CheckForNull Function<String, String> classOwner) {
+        this.classOwner = classOwner;
+    }
 
     @NonNull
     @Override
@@ -92,7 +109,11 @@ public class PluginsCollector extends HygieneCollector {
 
     /** What the sources showed. */
     private static final class Footprint {
-        final Set<String> configStamped = new HashSet<>();
+        /** subject (item full name, or a root file / agent label) to the plugin names stamped in its configuration */
+        final Map<String, Set<String>> stampsBySubject = new LinkedHashMap<>();
+
+        final Set<String> stamped = new HashSet<>();
+        final Set<String> classNames = new HashSet<>();
         final Set<String> globalFiles = new HashSet<>();
         final Map<String, Integer> stepCounts = new HashMap<>();
         int configFiles;
@@ -113,7 +134,8 @@ public class PluginsCollector extends HygieneCollector {
         try (DirectoryStream<Path> ds = Files.newDirectoryStream(root, "*.xml")) {
             for (Path p : ds) {
                 ctx.checkpoint();
-                stamps(p, fp.configStamped, fp);
+                Path n = p.getFileName();
+                scanFile(p, "(root) " + (n == null ? "?" : n), fp);
                 classFileOwner(pm, p, fp.globalFiles);
             }
         } catch (IOException e) {
@@ -124,7 +146,8 @@ public class PluginsCollector extends HygieneCollector {
             try (DirectoryStream<Path> ds = Files.newDirectoryStream(nodes)) {
                 for (Path dir : ds) {
                     ctx.checkpoint();
-                    stamps(dir.resolve("config.xml"), fp.configStamped, fp);
+                    Path n = dir.getFileName();
+                    scanFile(dir.resolve("config.xml"), "(agent) " + (n == null ? "?" : n), fp);
                 }
             } catch (IOException e) {
                 fp.unreadable++;
@@ -133,7 +156,7 @@ public class PluginsCollector extends HygieneCollector {
         for (Item item : Items.allItems2(ACL.SYSTEM2, jenkins, Item.class)) {
             ctx.checkpoint();
             try {
-                stamps(Items.getConfigFile(item).getFile().toPath(), fp.configStamped, fp);
+                scanFile(Items.getConfigFile(item).getFile().toPath(), item.getFullName(), fp);
                 if (pipelines && item instanceof Job<?, ?> job) {
                     Set<String> used = PipelineStepPlugins.of(job);
                     if (!used.isEmpty()) {
@@ -147,18 +170,19 @@ public class PluginsCollector extends HygieneCollector {
                 fp.unreadable++;
             }
         }
+        Set<String> viaClass = owners(pm, fp.classNames);
 
         // ---- verdicts
-        orphanedData(ctx, installed);
-        needsReview(ctx, pm, fp);
+        orphanedData(ctx, installed, fp);
+        needsReview(ctx, pm, fp, viaClass);
         return CollectorResult.complete();
     }
 
     // ----------------------------------------------------------- orphaned data
 
-    private void orphanedData(ScanContext ctx, Set<String> installed) {
+    private void orphanedData(ScanContext ctx, Set<String> installed, Footprint fp) {
+        Map<String, String> odmExtra = new LinkedHashMap<>();
         OldDataMonitor odm = ExtensionList.lookupSingleton(OldDataMonitor.class);
-        Set<String> done = new HashSet<>();
         for (Map.Entry<Saveable, OldDataMonitor.VersionRange> e : odm.getData().entrySet()) {
             String extra = e.getValue().extra;
             if (extra == null || extra.isBlank()) {
@@ -170,21 +194,50 @@ public class PluginsCollector extends HygieneCollector {
                     : s instanceof Run<?, ?> r
                             ? r.getExternalizableId()
                             : s.getClass().getName();
-            if (name.isBlank() || name.length() > Subject.MAX_NAME || !done.add(name)) {
+            odmExtra.putIfAbsent(name, extra);
+        }
+        Map<String, Set<String>> missingBySubject = new LinkedHashMap<>();
+        fp.stampsBySubject.forEach((subject, stamps) -> {
+            Set<String> missing = new TreeSet<>(stamps);
+            missing.removeAll(installed);
+            if (!missing.isEmpty()) {
+                missingBySubject.put(subject, missing);
+            }
+        });
+
+        Set<String> subjects = new TreeSet<>(odmExtra.keySet());
+        subjects.addAll(missingBySubject.keySet());
+        for (String name : subjects) {
+            if (name.isBlank() || name.length() > Subject.MAX_NAME) {
                 continue;
             }
+            String extra = odmExtra.get(name);
+            Set<String> missing = missingBySubject.get(name);
             List<Evidence> ev = new ArrayList<>();
-            ev.add(new Evidence(SRC_ORPHAN, "Jenkins reports data it cannot read: " + oneLine(extra), 60));
-            Set<String> missing = missingPlugins(s, installed, extra);
-            if (!missing.isEmpty()) {
+            if (extra != null) {
+                ev.add(new Evidence(SRC_ORPHAN, "Jenkins reports data it cannot read: " + oneLine(extra), 60));
+                if (missing == null) {
+                    Matcher m = MISSING_CLASS.matcher(extra);
+                    if (m.find()) {
+                        ev.add(new Evidence(SRC_ORPHAN, "The class that cannot be found: " + m.group(1), 0));
+                    }
+                }
+            }
+            if (missing != null) {
                 ev.add(new Evidence(
-                        SRC_ORPHAN, "Written by plugin(s) that are not installed: " + String.join(", ", missing), 0));
+                        SRC_STAMP,
+                        "The stored configuration marks data as written by plugin(s) that are not installed: "
+                                + String.join(", ", missing),
+                        55));
+                ev.add(new Evidence(
+                        SRC_STAMP,
+                        "A plugin that was renamed leaves the same trace, and so does a plugin removed on purpose after its data was no longer needed",
+                        0));
             }
             ev.add(new Evidence(
                     SRC_ORPHAN,
-                    "The same symptom appears when a plugin upgrade removed a class; Jenkins lists only data loaded since the last restart",
+                    "Jenkins' own list covers only data loaded since the last restart and omits items inside folders; the stamps stay in the XML until the item is saved again",
                     0));
-            ev.add(new Evidence(SRC_ORPHAN, "The unreadable XML stays on disk until the item is saved again", 0));
             ctx.emit(new FindingCandidate(
                     "plugin.orphaned_data",
                     Category.PLUGINS,
@@ -196,43 +249,29 @@ public class PluginsCollector extends HygieneCollector {
         }
     }
 
-    private static Set<String> missingPlugins(Saveable s, Set<String> installed, String extra) {
-        Set<String> names = new TreeSet<>();
-        if (s instanceof Item item) {
-            try (InputStream in =
-                    Files.newInputStream(Items.getConfigFile(item).getFile().toPath())) {
-                Set<String> stamped = new HashSet<>();
-                PluginAttributes.scan(in, stamped);
-                stamped.stream().filter(n -> !installed.contains(n)).forEach(names::add);
-            } catch (IOException | XMLStreamException | RuntimeException e) {
-                // best effort: the class name below still identifies the cause
-            }
-        }
-        if (names.isEmpty()) {
-            Matcher m = MISSING_CLASS.matcher(extra);
-            if (m.find()) {
-                names.add("class " + m.group(1));
-            }
-        }
-        return names;
-    }
-
     // ------------------------------------------------------------- needs review
 
-    private void needsReview(ScanContext ctx, PluginManager pm, Footprint fp) {
+    private void needsReview(ScanContext ctx, PluginManager pm, Footprint fp, Set<String> viaClass) {
         for (PluginWrapper p : pm.getPlugins()) {
             String name = p.getShortName();
             if (p.isBundled() || !p.isEnabled() || !p.getDependents().isEmpty() || name.equals("hygiene-auditor")) {
                 continue; // shipped with Jenkins, already disabled, a library others need, or ourselves
             }
-            if (fp.configStamped.contains(name) || fp.globalFiles.contains(name) || fp.stepCounts.containsKey(name)) {
+            if (fp.stamped.contains(name)
+                    || fp.globalFiles.contains(name)
+                    || viaClass.contains(name)
+                    || fp.stepCounts.containsKey(name)) {
                 continue;
+            }
+            if (!PluginCode.hasCode(p)) {
+                continue; // a suite / meta-plugin: it exists to install other plugins, so "nothing uses it" says
+                // nothing
             }
             List<Evidence> ev = new ArrayList<>();
             ev.add(new Evidence(
                     SRC,
-                    "No configuration file marks data as written by this plugin (" + fp.configFiles
-                            + " files read), and it has no persisted global configuration file",
+                    "No configuration file marks data as written by this plugin or names one of its classes ("
+                            + fp.configFiles + " files read), and it has no persisted global settings file",
                     30));
             ev.add(new Evidence(
                     SRC,
@@ -263,17 +302,52 @@ public class PluginsCollector extends HygieneCollector {
 
     // ------------------------------------------------------------------ helpers
 
-    private void stamps(Path file, Set<String> into, Footprint fp) {
+    private void scanFile(Path file, String subject, Footprint fp) {
         try {
             if (!Files.isRegularFile(file)) {
                 return;
             }
             try (InputStream in = Files.newInputStream(file)) {
-                PluginAttributes.scan(in, into);
+                PluginAttributes.Result r = PluginAttributes.scan(in);
                 fp.configFiles++;
+                if (!r.pluginStamps().isEmpty()) {
+                    fp.stampsBySubject
+                            .computeIfAbsent(subject, k -> new TreeSet<>())
+                            .addAll(r.pluginStamps());
+                    fp.stamped.addAll(r.pluginStamps());
+                }
+                for (String c : r.classNames()) {
+                    if (fp.classNames.size() < MAX_CLASSES) {
+                        fp.classNames.add(c);
+                    }
+                }
             }
         } catch (IOException | XMLStreamException e) {
             fp.unreadable++;
+        }
+    }
+
+    /** The plugins that own the classes configuration mentions. */
+    private Set<String> owners(PluginManager pm, Set<String> classNames) {
+        Function<String, String> resolve = classOwner != null ? classOwner : name -> ownerOf(pm, name);
+        Set<String> out = new HashSet<>();
+        for (String c : classNames) {
+            String owner = resolve.apply(c);
+            if (owner != null) {
+                out.add(owner);
+            }
+        }
+        return out;
+    }
+
+    /** Loads the class without initialising it and asks Jenkins which plugin it came from; null for core or unknown. */
+    @CheckForNull
+    private static String ownerOf(PluginManager pm, String className) {
+        try {
+            PluginWrapper pw = pm.whichPlugin(pm.uberClassLoader.loadClass(className));
+            return pw == null ? null : pw.getShortName();
+        } catch (ClassNotFoundException | LinkageError e) {
+            return null; // belongs to no installed plugin (or to core)
         }
     }
 
@@ -282,6 +356,7 @@ public class PluginsCollector extends HygieneCollector {
      * hudson.plugins.git.GitTool}), or null for files that are not class-named ({@code config.xml},
      * {@code nodeMonitors.xml}, ...).
      */
+    @CheckForNull
     static String classNameOf(Path file) {
         Path fileName = file.getFileName();
         if (fileName == null) {
@@ -295,23 +370,13 @@ public class PluginsCollector extends HygieneCollector {
         return CLASS_FILE.matcher(className).matches() ? className : null;
     }
 
-    /**
-     * A root file named after a class means that class's plugin saved settings. The class is loaded without being
-     * initialised. Note: the attribution relies on the class coming from the plugin's own class loader, which is true
-     * in a running Jenkins but not when the plugin's jar is also on a test classpath.
-     */
     private static void classFileOwner(PluginManager pm, Path file, Set<String> into) {
         String className = classNameOf(file);
-        if (className == null) {
-            return;
-        }
-        try {
-            PluginWrapper pw = pm.whichPlugin(pm.uberClassLoader.loadClass(className));
-            if (pw != null) {
-                into.add(pw.getShortName());
+        if (className != null) {
+            String owner = ownerOf(pm, className);
+            if (owner != null) {
+                into.add(owner);
             }
-        } catch (ClassNotFoundException | LinkageError e) {
-            // the class belongs to no installed plugin
         }
     }
 

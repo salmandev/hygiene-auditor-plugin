@@ -4,41 +4,65 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Set;
-import java.util.TreeSet;
 import javax.xml.stream.XMLStreamException;
 import org.junit.jupiter.api.Test;
 
 class PluginAttributesTest {
-    private static Set<String> scan(String xml) throws Exception {
-        Set<String> out = new TreeSet<>();
-        PluginAttributes.scan(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)), out);
-        return out;
+    private static PluginAttributes.Result scan(String xml) throws Exception {
+        return PluginAttributes.scan(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    private static Set<String> stamps(String xml) throws Exception {
+        return scan(xml).pluginStamps();
     }
 
     @Test
     void readsPluginNamesFromAttributesAnywhereInTheTree() throws Exception {
         assertEquals(
                 Set.of("git", "workflow-job", "bare"),
-                scan("<a plugin=\"workflow-job@1571\"><b><c plugin=\"git@5.11.0\"/><d plugin=\"bare\"/></b></a>"));
-        assertEquals(Set.of(), scan("<a><b other=\"git@1\"/></a>"));
+                stamps("<a plugin=\"workflow-job@1571\"><b><c plugin=\"git@5.11.0\"/><d plugin=\"bare\"/></b></a>"));
+        assertEquals(Set.of(), stamps("<a><b other=\"git@1\"/></a>"));
+    }
+
+    @Test
+    void readsClassNamesFromClassAttributesAndClassNamedElements() throws Exception {
+        PluginAttributes.Result r =
+                scan("<jenkins><authorizationStrategy class=\"hudson.security.ProjectMatrixAuthorizationStrategy\">"
+                        + "<hudson.tasks.Shell><command>echo $HOME</command></hudson.tasks.Shell>"
+                        + "<plain/><project/><foo class=\"notAClassName\"/></authorizationStrategy></jenkins>");
+        assertEquals(
+                Set.of("hudson.security.ProjectMatrixAuthorizationStrategy", "hudson.tasks.Shell"), r.classNames());
+        assertFalse(r.classNames().contains("project"), "names without a dot are not classes");
     }
 
     @Test
     void neverLooksAtElementTextWhereSecretsLive() throws Exception {
-        Set<String> found = scan("<a plugin=\"ssh-credentials@1\"><password>S3cr3t-Hunter2</password>"
+        PluginAttributes.Result r = scan("<a plugin=\"ssh-credentials@1\"><password>S3cr3t-Hunter2</password>"
                 + "<privateKey>-----BEGIN RSA PRIVATE KEY-----</privateKey></a>");
-        assertEquals(Set.of("ssh-credentials"), found);
-        assertFalse(found.toString().contains("Hunter2"));
+        assertEquals(Set.of("ssh-credentials"), r.pluginStamps());
+        assertFalse(r.toString().contains("Hunter2") || r.toString().contains("PRIVATE KEY"));
+    }
+
+    @Test
+    void classNamesAreBoundedPerFile() throws Exception {
+        StringBuilder xml = new StringBuilder("<a>");
+        for (int i = 0; i < PluginAttributes.MAX_CLASSES + 500; i++) {
+            xml.append("<x class=\"com.example.C").append(i).append("\"/>");
+        }
+        assertEquals(
+                PluginAttributes.MAX_CLASSES,
+                scan(xml.append("</a>").toString()).classNames().size());
     }
 
     @Test
     void xml11AsWrittenByJenkinsIsAccepted() throws Exception {
-        assertEquals(Set.of("p"), scan("<?xml version='1.1' encoding='UTF-8'?><a plugin=\"p@1\"><x>&#x1;</x></a>"));
+        assertEquals(Set.of("p"), stamps("<?xml version='1.1' encoding='UTF-8'?><a plugin=\"p@1\"><x>&#x1;</x></a>"));
     }
 
     @Test
@@ -65,7 +89,8 @@ class PluginAttributesTest {
 
     @Test
     void absurdNamesAreIgnored() throws Exception {
-        assertEquals(Set.of(), scan("<a plugin=\"" + "x".repeat(500) + "@1\"/>"));
-        assertEquals(Set.of(), scan("<a plugin=\"@1\"/>"));
+        assertEquals(Set.of(), stamps("<a plugin=\"" + "x".repeat(500) + "@1\"/>"));
+        assertEquals(Set.of(), stamps("<a plugin=\"@1\"/>"));
+        assertTrue(scan("<a class=\"" + "a.".repeat(300) + "B\"/>").classNames().isEmpty(), "over-long class names");
     }
 }

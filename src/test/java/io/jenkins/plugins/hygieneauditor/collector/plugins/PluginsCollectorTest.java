@@ -80,13 +80,58 @@ class PluginsCollectorTest {
         plantOrphan("orphan");
         Finding f = find(scan(), "plugin.orphaned_data", "orphan").orElseThrow();
         assertEquals("plugin_data", f.subject().kind());
-        assertEquals(Confidence.MEDIUM, f.confidence()); // Jenkins' own diagnosis, but also caused by plugin upgrades
+        assertEquals(Confidence.HIGH, f.confidence()); // Jenkins' diagnosis (60) corroborated by the stamp (55)
         assertEquals(Severity.LOW, f.severity());
         String text = f.evidence().toString();
         assertTrue(text.contains("CannotResolveClassException: com.example.gone.GoneBuilder"), text);
         assertTrue(text.contains("not installed: gone"), "names the missing plugin from the config stamp: " + text);
-        assertTrue(text.contains("upgrade removed a class"), "states the other possible cause: " + text);
-        assertTrue(text.contains("stays on disk"), text);
+        assertTrue(text.contains("renamed"), "states the other possible cause: " + text);
+        assertTrue(text.contains("omits items inside folders"), "states the limit of Jenkins' own list: " + text);
+    }
+
+    @Test
+    void aStampNamingAMissingPluginIsEnoughOnItsOwn() throws Exception {
+        FreeStyleProject p = j.createFreeStyleProject("stamped");
+        Path cfg = p.getConfigFile().getFile().toPath();
+        Files.writeString(
+                cfg, Files.readString(cfg).replace("</project>", "<note plugin=\"retired-plugin@3.1\"/></project>"));
+        // no reload: Jenkins' own monitor knows nothing about this
+        Finding f = find(scan(), "plugin.orphaned_data", "stamped").orElseThrow();
+        assertEquals(Confidence.MEDIUM, f.confidence(), "one source only: 55");
+        assertTrue(
+                f.evidence().toString().contains("not installed: retired-plugin"),
+                f.evidence().toString());
+    }
+
+    @Test
+    void orphanedDataInsideAFolderIsFoundEvenThoughJenkinsOwnListMissesIt() throws Exception {
+        // Found by running the plugin in Docker: OldDataMonitor reported a top-level job but not the same job in a
+        // folder.
+        var folder = j.jenkins.createProject(com.cloudbees.hudson.plugins.folder.Folder.class, "legacy");
+        FreeStyleProject p = folder.createProject(FreeStyleProject.class, "removed-plugin-user");
+        Path cfg = p.getConfigFile().getFile().toPath();
+        Files.writeString(
+                cfg,
+                Files.readString(cfg)
+                        .replace(
+                                "<builders/>",
+                                "<builders><com.example.sonar.SonarBuilder plugin=\"sonar-legacy@2.1\"><server>old</server></com.example.sonar.SonarBuilder></builders>"));
+        j.jenkins.reload();
+        Finding f = find(scan(), "plugin.orphaned_data", "legacy/removed-plugin-user")
+                .orElseThrow();
+        assertTrue(
+                f.evidence().toString().contains("not installed: sonar-legacy"),
+                f.evidence().toString());
+        assertTrue(f.confidence().compareTo(Confidence.MEDIUM) >= 0);
+    }
+
+    @Test
+    void aStampNamingAnInstalledPluginIsNotOrphanedData() throws Exception {
+        FreeStyleProject p = j.createFreeStyleProject("fine");
+        Path cfg = p.getConfigFile().getFile().toPath();
+        Files.writeString(
+                cfg, Files.readString(cfg).replace("</project>", "<note plugin=\"workflow-job@1\"/></project>"));
+        assertTrue(find(scan(), "plugin.orphaned_data", "fine").isEmpty());
     }
 
     @Test
@@ -142,6 +187,23 @@ class PluginsCollectorTest {
         assertTrue(
                 find(after, "plugin.needs_review", victim).isEmpty(), victim + " is now referenced by a configuration");
         assertEquals(before.size() - 1, after.size(), "and nothing else changed");
+    }
+
+    @Test
+    void aClassNamedInConfigurationMakesItsPluginObserved() throws Exception {
+        String victim = reviews(scan()).get(0).subject().fullName();
+        FreeStyleProject p = j.createFreeStyleProject("uses-class");
+        Path cfg = p.getConfigFile().getFile().toPath();
+        Files.writeString(
+                cfg, Files.readString(cfg).replace("</project>", "<x class=\"com.example.UsedThing\"/></project>"));
+        // Which plugin owns a class is Jenkins' call (and cannot be shown on this classpath), so inject the lookup.
+        PluginsCollector withOwner = new PluginsCollector(c -> c.equals("com.example.UsedThing") ? victim : null);
+        assertTrue(
+                find(t.scan(withOwner, 0), "plugin.needs_review", victim).isEmpty(),
+                victim + " owns a class that a configuration names");
+        assertTrue(
+                find(t.scan(collector, 0), "plugin.needs_review", victim).isPresent(),
+                "without the lookup it is still unobserved");
     }
 
     @Test

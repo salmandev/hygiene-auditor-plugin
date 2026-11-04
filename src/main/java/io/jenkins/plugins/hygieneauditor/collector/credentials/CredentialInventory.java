@@ -73,6 +73,12 @@ final class CredentialInventory {
             String owner = context instanceof Item i ? i.getFullName() : "";
             try {
                 for (CredentialsStore store : CredentialsProvider.lookupStores(context)) {
+                    if (store.getContext() != context) {
+                        // lookupStores(folder) also returns the stores it inherits (Jenkins' own). Those belong to
+                        // their real owner and are enumerated there: counting them here duplicated every root
+                        // credential under every folder.
+                        continue;
+                    }
                     for (Domain domain : store.getDomains()) {
                         for (Credentials c : store.getCredentials(domain)) {
                             ctx.checkpoint();
