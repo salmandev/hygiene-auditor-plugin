@@ -140,6 +140,16 @@ class ExportEndpointsTest {
     }
 
     @Test
+    void viewModeShowsThePlanInTheBrowserInsteadOfDownloadingIt() throws Exception {
+        seed(finding("job.stale", Category.JOBS, "job", "sure", Confidence.HIGH));
+        var resp = as("admin").goTo(BASE + "removalPlan?view=true", null).getWebResponse();
+        assertTrue(resp.getContentType().startsWith("text/plain"), resp.getContentType());
+        assertNull(resp.getResponseHeaderValue("Content-Disposition"));
+        assertEquals("nosniff", resp.getResponseHeaderValue("X-Content-Type-Options"));
+        assertTrue(resp.getContentAsString().contains("final boolean DRY_RUN = true"));
+    }
+
+    @Test
     void removalPlanDefaultsToHighConfidenceOpenFindingsOnly() throws Exception {
         seed(
                 finding("job.stale", Category.JOBS, "job", "sure", Confidence.HIGH),

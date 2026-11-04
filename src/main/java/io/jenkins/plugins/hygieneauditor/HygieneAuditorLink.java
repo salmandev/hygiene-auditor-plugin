@@ -426,7 +426,13 @@ public class HygieneAuditorLink extends ManagementLink {
                 .log(java.util.logging.Level.INFO, "{0} generated a {1} removal plan with {2} item(s)", new Object[] {
                     user, format, selected.size()
                 });
-        download(rsp, format.contentType(), "hygiene-removal-plan." + format.extension());
+        if ("true".equals(req.getParameter("view"))) { // show it in the browser instead of saving a file
+            rsp.setContentType("text/plain;charset=UTF-8");
+            rsp.setHeader("X-Content-Type-Options", "nosniff");
+            rsp.setHeader("Cache-Control", "no-store");
+        } else {
+            download(rsp, format.contentType(), "hygiene-removal-plan." + format.extension());
+        }
         rsp.getWriter()
                 .write(io.jenkins.plugins.hygieneauditor.export.RemovalPlan.generate(
                         selected, format, user, Instant.now()));

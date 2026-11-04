@@ -35,7 +35,7 @@
             <a class="ha-btn" href="${rootURL}/${s.subjectPath}" target="_blank" rel="noopener">${s.subjectLinkLabel} ↗</a>
           </j:if>
           <j:if test="${it.global}">
-            <a class="ha-btn ha-btn-primary" href="removalPlan?format=${s.removalSupported ? 'groovy' : 'checklist'}&amp;id=${s.id}">${%Removal plan}</a>
+            <a class="ha-btn ha-btn-primary" href="removalPlan?format=${s.removalSupported ? 'groovy' : 'checklist'}&amp;id=${s.id}&amp;view=true" target="_blank" rel="noopener">${%Removal plan}</a>
           </j:if>
         </div>
         <a class="ha-panel-link" href="finding/${s.id}/">${%Full evidence and decisions} →</a>
