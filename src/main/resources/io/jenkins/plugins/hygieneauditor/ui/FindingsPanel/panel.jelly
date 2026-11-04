@@ -31,6 +31,9 @@
               <button type="submit" class="ha-btn">${%Acknowledge}</button>
             </f:form>
           </j:if>
+          <j:if test="${s.subjectPath != null}">
+            <a class="ha-btn" href="${rootURL}/${s.subjectPath}" target="_blank" rel="noopener">${s.subjectLinkLabel} ↗</a>
+          </j:if>
           <j:if test="${it.global}">
             <a class="ha-btn ha-btn-primary" href="removalPlan?format=${s.removalSupported ? 'groovy' : 'checklist'}&amp;id=${s.id}">${%Removal plan}</a>
           </j:if>

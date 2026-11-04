@@ -81,6 +81,17 @@ public class FindingBean {
         };
     }
 
+    /** Path (relative to the Jenkins root) of Jenkins' own page for the subject, or null. Not exported to REST. */
+    public String getSubjectPath() {
+        var l = io.jenkins.plugins.hygieneauditor.ui.SubjectLinks.of(f.subject());
+        return l == null ? null : l.path();
+    }
+
+    public String getSubjectLinkLabel() {
+        var l = io.jenkins.plugins.hygieneauditor.ui.SubjectLinks.of(f.subject());
+        return l == null ? null : io.jenkins.plugins.hygieneauditor.ui.Labels.openIn(l.labelKey());
+    }
+
     public String getTypeLabel() {
         return io.jenkins.plugins.hygieneauditor.ui.Labels.type(f.type());
     }

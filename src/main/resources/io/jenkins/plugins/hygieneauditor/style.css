@@ -223,3 +223,4 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-form small { display: block; margin-top: 4px; font-size: 12px; }
 .ha-form input[type=text], .ha-form input[type=number] { width: 100%; min-width: 12rem; }
 .ha-side .ha-panel > h3:first-child { margin-top: 0; }
+.ha-linkrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 20px 20px; font-size: 13px; }

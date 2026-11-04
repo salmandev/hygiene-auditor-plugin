@@ -127,6 +127,10 @@ filterable, sortable findings table; per-finding evidence with the weight of eac
 administrators, a trend of open findings per scan. People who hold *Hygiene Auditor/View* on a folder (and nowhere
 else) get a **Hygiene Auditor** tab on that folder, limited to its own findings.
 
+Each finding has an **Open … in Jenkins** button that goes to Jenkins' own page for that credential, job, agent, plugin
+list or library setting. Deleting happens there, under Jenkins' own permission check and confirmation: the plugin
+itself never deletes anything. The button is shown only when the object still exists and you could open that page.
+
 Findings can be **acknowledged**, or **ignored with a reason** and an optional snooze. A snooze that expires reopens
 the finding. A finding that is no longer observed becomes **resolved** and is removed after the retention period.
 

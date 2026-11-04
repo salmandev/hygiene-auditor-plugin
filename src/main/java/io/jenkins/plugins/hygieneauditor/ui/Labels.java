@@ -94,6 +94,19 @@ public final class Labels {
     private static final DateTimeFormatter SHORT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm 'UTC'").withZone(ZoneOffset.UTC);
 
+    /** Button text for the link to Jenkins' own page for a subject; {@code key} comes from {@code SubjectLinks}. */
+    @NonNull
+    public static String openIn(@NonNull String key) {
+        return switch (key) {
+            case "job" -> Messages.Label_OpenIn_job();
+            case "agent" -> Messages.Label_OpenIn_agent();
+            case "credential" -> Messages.Label_OpenIn_credential();
+            case "plugin" -> Messages.Label_OpenIn_plugin();
+            case "plugin_data" -> Messages.Label_OpenIn_plugin_data();
+            default -> Messages.Label_OpenIn_library();
+        };
+    }
+
     /** Plain-language name of a finding type; unknown (third-party) types show as they are. */
     @NonNull
     public static String type(@NonNull String type) {
