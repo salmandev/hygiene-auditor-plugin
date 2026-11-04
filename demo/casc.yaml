@@ -1,0 +1,34 @@
+# Demo configuration. Users and passwords are for a local throw-away container only.
+jenkins:
+  systemMessage: "Hygiene Auditor demo instance (sample data, safe to delete)"
+  numExecutors: 2
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+      - id: "admin"
+        password: "admin"
+      - id: "lead"
+        password: "lead"
+  authorizationStrategy:
+    projectMatrix:
+      permissions:
+      - "Overall/Administer:admin"
+      - "Overall/Read:lead"
+appearance:
+  themeManager:
+    theme: "darkSystem"     # follows the browser: light by default, dark when the system asks for it
+unclassified:
+  location:
+    url: "http://localhost:8080/"
+  hygieneAuditor:
+    # Thresholds small enough that sample data shows up immediately.
+    neverBuiltGraceDays: 0
+    staleJobDays: 365
+    disabledJobDays: 180
+    offlineAgentDays: 30
+    credentialStaleUseDays: 180
+    ignoreRules:
+    - category: "CREDENTIALS"
+      subject: "^prod-.*"
+      reason: "Managed by the platform team"

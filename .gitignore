@@ -4,3 +4,4 @@ work/
 *.iml
 .vscode/
 .DS_Store
+demo/*.hpi
