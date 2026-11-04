@@ -18,15 +18,45 @@ import org.kohsuke.stapler.export.ExportedBean;
 @ExportedBean(defaultVisibility = 999)
 public class SummaryBean {
     private final FindingService.Counts counts;
+    private final List<Finding> visible;
     private final Optional<ScanStatus> running;
     private final ScanRecord last;
 
     public SummaryBean() throws IOException {
-        List<Finding> visible = FindingService.visible();
+        this.visible = FindingService.visible();
         this.counts = FindingService.counts(visible);
         ScanService svc = ScanService.get();
         this.running = svc.status();
         this.last = svc.lastScan();
+    }
+
+    /** Open findings of one type (not exported: used by the dashboard cards). */
+    public int openOfType(String type) {
+        return (int) visible.stream()
+                .filter(f -> f.status() == io.jenkins.plugins.hygieneauditor.model.Status.OPEN
+                        && f.type().equals(type))
+                .count();
+    }
+
+    /** Open, high-confidence findings in a category. */
+    public int openHighConfidence(io.jenkins.plugins.hygieneauditor.model.Category c) {
+        return (int) visible.stream()
+                .filter(f -> f.status() == io.jenkins.plugins.hygieneauditor.model.Status.OPEN
+                        && f.category() == c
+                        && f.confidence() == io.jenkins.plugins.hygieneauditor.model.Confidence.HIGH)
+                .count();
+    }
+
+    /** Findings that carry a decision: acknowledged, ignored or resolved. */
+    public int reviewedCount() {
+        var st = counts.byStatus();
+        return st.getOrDefault(io.jenkins.plugins.hygieneauditor.model.Status.ACKNOWLEDGED, 0)
+                + st.getOrDefault(io.jenkins.plugins.hygieneauditor.model.Status.IGNORED, 0)
+                + st.getOrDefault(io.jenkins.plugins.hygieneauditor.model.Status.RESOLVED, 0);
+    }
+
+    public int openCount() {
+        return counts.byStatus().getOrDefault(io.jenkins.plugins.hygieneauditor.model.Status.OPEN, 0);
     }
 
     @Exported

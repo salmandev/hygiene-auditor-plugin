@@ -57,7 +57,13 @@ public class FolderHygieneAction implements Action {
     public FindingsPanel getPanel() throws IOException {
         folder.checkPermission(HygieneAuditorPermissions.VIEW);
         FindingQuery q = query();
-        return new FindingsPanel(q, FindingService.query(q), false);
+        return new FindingsPanel(
+                q,
+                FindingService.query(q),
+                false,
+                FindingService.categoryCounts(q),
+                Stapler.getCurrentRequest2().getParameter("selected"),
+                null);
     }
 
     /** {@code <folder>/hygiene-auditor/findings/api/json} */

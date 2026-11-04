@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import jenkins.model.Jenkins;
@@ -73,15 +74,207 @@ public class HygieneAuditorLink extends ManagementLink {
 
     // -------------------------------------------------------------- UI model
 
+    /** One collector's result in the last scan, for the status header. */
+    public record ScanChip(String name, String status, String statusLabel, long items, int findings, String message) {}
+
+    /** The last scan as the header shows it. {@code chips} is empty when only saved history is available. */
+    public record ScanView(
+            String endedAgo, String endedIso, String state, String stateLabel, String trigger, List<ScanChip> chips) {}
+
+    /** The last scan: from memory if this controller ran one since it started, otherwise from the saved history. */
+    public ScanView getLastScanView() throws IOException {
+        io.jenkins.plugins.hygieneauditor.scan.ScanRecord r = ScanService.get().lastScan();
+        if (r != null) {
+            List<ScanChip> chips = new java.util.ArrayList<>();
+            for (var o : r.outcomes()) {
+                String name = io.jenkins.plugins.hygieneauditor.collector.HygieneCollector.all().stream()
+                        .filter(c -> c.getId().equals(o.collectorId()))
+                        .map(io.jenkins.plugins.hygieneauditor.collector.HygieneCollector::getDisplayName)
+                        .findFirst()
+                        .orElse(o.collectorId());
+                chips.add(new ScanChip(
+                        name,
+                        o.status().name(),
+                        io.jenkins.plugins.hygieneauditor.ui.Labels.collectorStatus(
+                                o.status().name()),
+                        o.itemsExamined(),
+                        o.findings(),
+                        o.message()));
+            }
+            return new ScanView(
+                    io.jenkins.plugins.hygieneauditor.ui.Labels.ago(r.end()),
+                    r.end().toString(),
+                    r.state().name(),
+                    io.jenkins.plugins.hygieneauditor.ui.Labels.scanState(
+                            r.state().name()),
+                    r.trigger(),
+                    chips);
+        }
+        var history = FindingStoreHolder.get().history().all();
+        if (history.isEmpty()) {
+            return null;
+        }
+        var h = history.get(history.size() - 1);
+        List<ScanChip> chips = new java.util.ArrayList<>();
+        for (var c : h.collectors()) {
+            chips.add(new ScanChip(
+                    collectorName(c.id()),
+                    c.status(),
+                    io.jenkins.plugins.hygieneauditor.ui.Labels.collectorStatus(c.status()),
+                    c.items(),
+                    c.findings(),
+                    null));
+        }
+        return new ScanView(
+                io.jenkins.plugins.hygieneauditor.ui.Labels.ago(h.end()),
+                h.end().toString(),
+                h.state(),
+                io.jenkins.plugins.hygieneauditor.ui.Labels.scanState(h.state()),
+                h.trigger(),
+                chips);
+    }
+
+    private static String collectorName(String id) {
+        return io.jenkins.plugins.hygieneauditor.collector.HygieneCollector.all().stream()
+                .filter(c -> c.getId().equals(id))
+                .map(io.jenkins.plugins.hygieneauditor.collector.HygieneCollector::getDisplayName)
+                .findFirst()
+                .orElse(id);
+    }
+
+    // Headline numbers take the already-built summary: building it re-filters every finding for the viewer.
+    public int openTotal(SummaryBean s) {
+        return s.getOpenByCategory().values().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
+    public int highSeverityCount(SummaryBean s) {
+        return s.getOpenBySeverity().getOrDefault("HIGH", 0);
+    }
+
+    public int highConfidenceCount(SummaryBean s) {
+        return s.getOpenByConfidence().getOrDefault("HIGH", 0);
+    }
+
+    public int decidedCount(SummaryBean s) {
+        var st = s.getByStatus();
+        return st.getOrDefault("ACKNOWLEDGED", 0) + st.getOrDefault("IGNORED", 0);
+    }
+
+    /** Sum of a card's values, at least 1 (the maximum of its progress bars). */
+    public int sumOf(java.util.Map<String, Integer> m) {
+        return Math.max(1, m.values().stream().mapToInt(Integer::intValue).sum());
+    }
+
+    /** Entries most important first (High before Low), for the severity and confidence cards. */
+    public List<java.util.Map.Entry<String, Integer>> mostImportantFirst(java.util.Map<String, Integer> m) {
+        List<java.util.Map.Entry<String, Integer>> l = new java.util.ArrayList<>(m.entrySet());
+        java.util.Collections.reverse(l);
+        return l;
+    }
+
     public SummaryBean getSummary() throws IOException {
         return new SummaryBean();
     }
 
     public io.jenkins.plugins.hygieneauditor.ui.FindingsPanel getPanel() throws IOException {
+        StaplerRequest2 req = org.kohsuke.stapler.Stapler.getCurrentRequest2();
         io.jenkins.plugins.hygieneauditor.rest.FindingQuery q =
-                io.jenkins.plugins.hygieneauditor.rest.FindingQuery.fromRequest(
-                        org.kohsuke.stapler.Stapler.getCurrentRequest2());
-        return new io.jenkins.plugins.hygieneauditor.ui.FindingsPanel(q, FindingService.query(q), true);
+                io.jenkins.plugins.hygieneauditor.rest.FindingQuery.fromRequest(req);
+        return new io.jenkins.plugins.hygieneauditor.ui.FindingsPanel(
+                q,
+                FindingService.query(q),
+                true,
+                FindingService.categoryCounts(q),
+                req.getParameter("selected"),
+                "setStatus");
+    }
+
+    /** One category card of the headline row. {@code tone} is red, amber, grey or none. */
+    public record Card(String label, int count, String pill, String tone, String url) {}
+
+    /** The ring: review progress, with its plain-language reading. */
+    public record Ring(int percent, String filled, String rest, String headline, String detail, String delta) {}
+
+    /** Cards for the headline row, one per category, each with the one fact most worth knowing. */
+    public List<Card> cardsFor(SummaryBean s) {
+        List<Card> cards = new java.util.ArrayList<>();
+        for (var c : io.jenkins.plugins.hygieneauditor.model.Category.values()) {
+            int n = s.getOpenByCategory().getOrDefault(c.name(), 0);
+            String pill = "";
+            String tone = "none";
+            switch (c) {
+                case CREDENTIALS -> {
+                    int hi = s.openHighConfidence(c);
+                    pill = hi > 0 ? Messages.Card_HighConfidence(hi) : n > 0 ? "" : Messages.Card_AllClear();
+                    tone = hi > 0 ? "red" : n > 0 ? "none" : "grey";
+                }
+                case JOBS -> {
+                    int nb = s.openOfType("job.never_built");
+                    pill = nb > 0 ? Messages.Card_NeverBuilt(nb) : n > 0 ? "" : Messages.Card_AllClear();
+                    tone = nb > 0 ? "amber" : n > 0 ? "none" : "grey";
+                }
+                case AGENTS -> {
+                    pill = n > 0
+                            ? Messages.Card_OfflineOver(
+                                    HygieneAuditorConfiguration.get().getOfflineAgentDays())
+                            : Messages.Card_AllClear();
+                    tone = n > 0 ? "amber" : "grey";
+                }
+                case SHARED_LIBRARIES -> {
+                    int uv = s.openOfType("library.unused_variable");
+                    pill = uv > 0 ? Messages.Card_UnusedVariables(uv) : n > 0 ? "" : Messages.Card_AllClear();
+                    tone = "grey";
+                }
+                case PLUGINS -> {
+                    int od = s.openOfType("plugin.orphaned_data");
+                    int nr = s.openOfType("plugin.needs_review");
+                    pill = od > 0
+                            ? Messages.Card_OrphanedData(od)
+                            : nr > 0 ? Messages.Card_NeedReview(nr) : Messages.Card_AllClear();
+                    tone = od > 0 ? "amber" : "grey";
+                }
+            }
+            cards.add(new Card(
+                    io.jenkins.plugins.hygieneauditor.ui.Labels.category(c), n, pill, tone, "?category=" + c.name()));
+        }
+        return cards;
+    }
+
+    /** Review progress and how the open count moved since the previous scan. */
+    public Ring ringFor(SummaryBean s) throws IOException {
+        int reviewed = s.reviewedCount();
+        int total = reviewed + s.openCount();
+        int percent = total == 0 ? 100 : (int) Math.round(100.0 * reviewed / total);
+        double circumference = 2 * Math.PI * 42;
+        double filled = circumference * percent / 100.0;
+        String headline = total == 0
+                ? Messages.Ring_Headline_Nothing()
+                : percent == 100
+                        ? Messages.Ring_Headline_Done()
+                        : percent >= 50 ? Messages.Ring_Headline_OnTrack() : Messages.Ring_Headline_Needs();
+        String delta = "";
+        var history = FindingStoreHolder.get().history().all();
+        if (history.size() >= 2) {
+            int diff = history.get(history.size() - 1).totalOpen()
+                    - history.get(history.size() - 2).totalOpen();
+            delta = diff > 0
+                    ? Messages.Ring_Delta_More(diff)
+                    : diff < 0 ? Messages.Ring_Delta_Fewer(-diff) : Messages.Ring_Delta_Same();
+        }
+        return new Ring(
+                percent,
+                String.format(java.util.Locale.ROOT, "%.1f", filled),
+                String.format(java.util.Locale.ROOT, "%.1f", circumference - filled),
+                headline,
+                total == 0 ? "" : Messages.Ring_Detail(reviewed, total),
+                delta);
+    }
+
+    /** Items examined in the last scan, summed over collectors (0 when only the saved history is available). */
+    public long itemsExamined(ScanView v) {
+        return v == null ? 0 : v.chips().stream().mapToLong(ScanChip::items).sum();
     }
 
     public String categoryLabel(String name) {
@@ -116,7 +309,7 @@ public class HygieneAuditorLink extends ManagementLink {
     public String getTrendSvg() throws IOException {
         return isTrendVisible()
                 ? io.jenkins.plugins.hygieneauditor.ui.TrendChart.render(
-                        FindingStoreHolder.get().history().all())
+                        FindingStoreHolder.get().history().all(), true)
                 : "";
     }
 
@@ -221,6 +414,13 @@ public class HygieneAuditorLink extends ManagementLink {
                     0);
         }
         java.util.List<Finding> selected = matching(q);
+        String onlyId = req.getParameter("id");
+        if (onlyId != null
+                && !onlyId.isBlank()) { // the side panel's button: exactly this finding, if the user may see it
+            selected = FindingService.visible(onlyId.trim())
+                    .map(java.util.List::of)
+                    .orElse(java.util.List.of());
+        }
         String user = Jenkins.getAuthentication2().getName();
         java.util.logging.Logger.getLogger(HygieneAuditorLink.class.getName())
                 .log(java.util.logging.Level.INFO, "{0} generated a {1} removal plan with {2} item(s)", new Object[] {

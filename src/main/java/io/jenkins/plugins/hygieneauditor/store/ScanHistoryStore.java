@@ -80,7 +80,8 @@ public final class ScanHistoryStore {
                             Instant.parse(o.get("end").getAsString()),
                             o.get("state").getAsString(),
                             ints(o.getAsJsonObject("openByCategory")),
-                            ints(o.getAsJsonObject("openBySeverity"))));
+                            ints(o.getAsJsonObject("openBySeverity")),
+                            collectors(o)));
                 } catch (RuntimeException e) {
                     LOGGER.log(Level.WARNING, "Skipped a malformed history entry");
                 }
@@ -105,10 +106,37 @@ public final class ScanHistoryStore {
             o.addProperty("state", e.state());
             o.add("openByCategory", obj(e.openByCategory()));
             o.add("openBySeverity", obj(e.openBySeverity()));
+            JsonArray cs = new JsonArray();
+            for (CollectorSummary c : e.collectors()) {
+                JsonObject co = new JsonObject();
+                co.addProperty("id", c.id());
+                co.addProperty("status", c.status());
+                co.addProperty("items", c.items());
+                co.addProperty("findings", c.findings());
+                cs.add(co);
+            }
+            o.add("collectors", cs);
             arr.add(o);
         }
         root.add("scans", arr);
         AtomicJson.write(file, root);
+    }
+
+    /** Optional field: absent in history written by earlier versions. */
+    private static List<CollectorSummary> collectors(JsonObject o) {
+        List<CollectorSummary> out = new ArrayList<>();
+        JsonElement arr = o.get("collectors");
+        if (arr != null && arr.isJsonArray()) {
+            for (JsonElement el : arr.getAsJsonArray()) {
+                JsonObject c = el.getAsJsonObject();
+                out.add(new CollectorSummary(
+                        c.get("id").getAsString(),
+                        c.get("status").getAsString(),
+                        c.get("items").getAsLong(),
+                        c.get("findings").getAsInt()));
+            }
+        }
+        return out;
     }
 
     private static JsonObject obj(Map<String, Integer> m) {

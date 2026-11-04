@@ -1,85 +1,91 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
-  <form method="get" action="." class="ha-filters" aria-label="${%Filter findings}">
-    <div>
-      <label for="ha-f-category">${%Category}</label>
-      <select id="ha-f-category" name="category" class="jenkins-select__input">
-        <j:forEach var="o" items="${it.categoryOptions.entrySet()}">
-          <option value="${o.key}" selected="${o.key == it.selectedCategory ? 'true' : null}">
-            <j:choose><j:when test="${empty(o.key)}">${%Any}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
-          </option>
-        </j:forEach>
-      </select>
-    </div>
-    <div>
-      <label for="ha-f-status">${%Status}</label>
-      <select id="ha-f-status" name="status" class="jenkins-select__input">
-        <j:forEach var="o" items="${it.statusOptions.entrySet()}">
-          <option value="${o.key}" selected="${o.key == it.selectedStatus ? 'true' : null}">
-            <j:choose><j:when test="${o.key == 'all'}">${%All}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
-          </option>
-        </j:forEach>
-      </select>
-    </div>
-    <div>
-      <label for="ha-f-conf">${%Minimum confidence}</label>
-      <select id="ha-f-conf" name="minConfidence" class="jenkins-select__input">
-        <j:forEach var="o" items="${it.confidenceOptions.entrySet()}">
-          <option value="${o.key}" selected="${o.key == it.selectedConfidence ? 'true' : null}">
-            <j:choose><j:when test="${empty(o.key)}">${%Any}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
-          </option>
-        </j:forEach>
-      </select>
-    </div>
-    <div>
-      <label for="ha-f-sev">${%Minimum severity}</label>
-      <select id="ha-f-sev" name="minSeverity" class="jenkins-select__input">
-        <j:forEach var="o" items="${it.severityOptions.entrySet()}">
-          <option value="${o.key}" selected="${o.key == it.selectedSeverity ? 'true' : null}">
-            <j:choose><j:when test="${empty(o.key)}">${%Any}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
-          </option>
-        </j:forEach>
-      </select>
-    </div>
-    <j:if test="${it.showFolderFilter}">
+  <div class="ha-findings-head">
+    <h2>${%Findings}</h2>
+    <nav class="ha-pills" aria-label="${%Filter by category}">
+      <j:forEach var="p" items="${it.pills}">
+        <a href="${p.url()}" class="ha-fpill ${p.active() ? 'ha-fpill-active' : ''}" aria-current="${p.active() ? 'true' : null}">${p.label()} <b>${p.count()}</b></a>
+      </j:forEach>
+    </nav>
+  </div>
+
+  <details class="ha-adv" open="${it.advancedActive ? 'open' : null}">
+    <summary>${%More filters}</summary>
+    <form method="get" action="." aria-label="${%Filter findings}">
+      <input type="hidden" name="category" value="${it.selectedCategory}"/>
       <div>
-        <label for="ha-f-folder">${%Folder}</label>
-        <input id="ha-f-folder" name="folder" type="text" class="jenkins-input" value="${it.selectedFolder}"/>
+        <label for="ha-f-status">${%Status}</label>
+        <select id="ha-f-status" name="status">
+          <j:forEach var="o" items="${it.statusOptions.entrySet()}">
+            <option value="${o.key}" selected="${o.key == it.selectedStatus ? 'true' : null}">
+              <j:choose><j:when test="${o.key == 'all'}">${%All}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
+            </option>
+          </j:forEach>
+        </select>
       </div>
-    </j:if>
-    <div><button type="submit" class="jenkins-button">${%Filter}</button></div>
-  </form>
+      <div>
+        <label for="ha-f-conf">${%Minimum confidence}</label>
+        <select id="ha-f-conf" name="minConfidence">
+          <j:forEach var="o" items="${it.confidenceOptions.entrySet()}">
+            <option value="${o.key}" selected="${o.key == it.selectedConfidence ? 'true' : null}">
+              <j:choose><j:when test="${empty(o.key)}">${%Any}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
+            </option>
+          </j:forEach>
+        </select>
+      </div>
+      <div>
+        <label for="ha-f-sev">${%Minimum severity}</label>
+        <select id="ha-f-sev" name="minSeverity">
+          <j:forEach var="o" items="${it.severityOptions.entrySet()}">
+            <option value="${o.key}" selected="${o.key == it.selectedSeverity ? 'true' : null}">
+              <j:choose><j:when test="${empty(o.key)}">${%Any}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
+            </option>
+          </j:forEach>
+        </select>
+      </div>
+      <j:if test="${it.showFolderFilter}">
+        <div>
+          <label for="ha-f-folder">${%Folder}</label>
+          <input id="ha-f-folder" name="folder" type="text" value="${it.selectedFolder}"/>
+        </div>
+      </j:if>
+      <div><button type="submit" class="ha-btn ha-btn-sm">${%Apply}</button></div>
+    </form>
+  </details>
 
   <j:choose>
     <j:when test="${empty(it.rows)}">
       <p class="ha-empty">${%No findings match the current filter.}</p>
     </j:when>
     <j:otherwise>
-      <table class="jenkins-table ha-table sortable">
-        <caption>${%Findings}: ${it.from}–${it.to} / ${it.total}</caption>
-        <thead>
-          <tr>
-            <th scope="col">${%Subject}</th>
-            <th scope="col">${%Type}</th>
-            <th scope="col">${%Severity}</th>
-            <th scope="col">${%Confidence}</th>
-            <th scope="col">${%Status}</th>
-            <th scope="col">${%Last seen}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <j:forEach var="r" items="${it.rows}">
+      <div class="ha-scroll">
+        <table class="ha-table">
+          <caption class="ha-table-caption">${%Showing} ${it.from}–${it.to} ${%of} ${it.total}</caption>
+          <thead>
             <tr>
-              <td><a href="finding/${r.id}/" class="jenkins-table__link">${r.subjectDisplayName}</a></td>
-              <td>${r.type}</td>
-              <td data-sort-value="${r.severity}"><span class="ha-badge ha-sev-${r.severity.toLowerCase()}">${r.severityLabel}</span></td>
-              <td data-sort-value="${r.confidence}"><span class="ha-badge ha-conf-${r.confidence.toLowerCase()}">${r.confidenceLabel}</span></td>
-              <td>${r.statusLabel}</td>
-              <td><time datetime="${r.lastSeen}">${r.lastSeen}</time></td>
+              <th scope="col">${%Confidence}</th>
+              <th scope="col">${%Finding}</th>
+              <th scope="col" class="ha-hide-sm">${%Evidence}</th>
+              <th scope="col" class="ha-hide-sm">${%Last seen}</th>
             </tr>
-          </j:forEach>
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            <j:forEach var="r" items="${it.rows}">
+              <tr class="${it.isSelected(r) ? 'ha-row-selected' : ''}">
+                <td><span class="ha-pill ha-conf-${r.confidence.toLowerCase()}">${r.confidenceLabel}</span></td>
+                <td>
+                  <a class="ha-name ha-mono" href="${it.selectUrl(r)}" aria-current="${it.isSelected(r) ? 'true' : null}">${r.subjectDisplayName}</a>
+                  <j:if test="${r.status != 'OPEN'}"> <span class="ha-status ha-status-${r.status.toLowerCase()}">${r.statusLabel}</span></j:if>
+                  <span class="ha-sub" title="${r.type}">${r.typeLabel}<span class="ha-sep">·</span><span class="ha-sev ha-sev-${r.severity.toLowerCase()}">${r.severityLabel} ${%severity}</span></span>
+                  <span class="ha-sub ha-sub-ev">${r.summaryLine}</span>
+                </td>
+                <td class="ha-hide-sm ha-ev">${r.summaryLine}</td>
+                <td class="ha-hide-sm"><time datetime="${r.lastSeen}" title="${r.lastSeen}">${r.lastSeenAgo}</time></td>
+              </tr>
+            </j:forEach>
+          </tbody>
+        </table>
+      </div>
       <nav class="ha-pager" aria-label="${%Pages}">
         <j:if test="${it.hasPrevious}"><a href="${it.previousUrl}">${%Previous}</a></j:if>
         <j:if test="${it.hasNext}"><a href="${it.nextUrl}">${%Next}</a></j:if>

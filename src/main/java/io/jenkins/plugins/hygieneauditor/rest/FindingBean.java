@@ -35,6 +35,72 @@ public class FindingBean {
         return new Api(this);
     }
 
+    /** Why we think so: the evidence that supports the conclusion (positive weight), strongest first. */
+    public java.util.List<String> getWhyLines() {
+        return f.evidence().stream()
+                .filter(e -> e.weight() > 0)
+                .sorted(java.util.Comparator.comparingInt(io.jenkins.plugins.hygieneauditor.model.Evidence::weight)
+                        .reversed())
+                .limit(6)
+                .map(io.jenkins.plugins.hygieneauditor.model.Evidence::text)
+                .toList();
+    }
+
+    /** What was not checked, and other caveats (zero weight). */
+    public java.util.List<String> getCaveatLines() {
+        return f.evidence().stream()
+                .filter(e -> e.weight() == 0)
+                .limit(4)
+                .map(io.jenkins.plugins.hygieneauditor.model.Evidence::text)
+                .toList();
+    }
+
+    /** One line for the table: the top supporting facts joined, shortened. */
+    public String getSummaryLine() {
+        String joined = String.join(" · ", getWhyLines().stream().limit(2).toList());
+        if (joined.isEmpty()) {
+            joined = f.evidence().isEmpty() ? "" : f.evidence().get(0).text();
+        }
+        return joined.length() <= 120 ? joined : joined.substring(0, 119) + "…";
+    }
+
+    /** Plain-language reading of the confidence level. */
+    public String getConfidenceNote() {
+        return switch (f.confidence()) {
+            case HIGH -> io.jenkins.plugins.hygieneauditor.Messages.Confidence_Note_HIGH();
+            case MEDIUM -> io.jenkins.plugins.hygieneauditor.Messages.Confidence_Note_MEDIUM();
+            case LOW -> io.jenkins.plugins.hygieneauditor.Messages.Confidence_Note_LOW();
+        };
+    }
+
+    /** True for the types a generated script can remove; others only appear in the checklist. */
+    public boolean isRemovalSupported() {
+        return switch (f.type()) {
+            case "job.never_built", "job.stale", "job.disabled", "agent.offline", "credential.unused" -> true;
+            default -> false;
+        };
+    }
+
+    public String getTypeLabel() {
+        return io.jenkins.plugins.hygieneauditor.ui.Labels.type(f.type());
+    }
+
+    public String getLastSeenShort() {
+        return io.jenkins.plugins.hygieneauditor.ui.Labels.shortTime(f.lastSeen());
+    }
+
+    public String getLastSeenAgo() {
+        return io.jenkins.plugins.hygieneauditor.ui.Labels.ago(f.lastSeen());
+    }
+
+    public String getFirstSeenShort() {
+        return io.jenkins.plugins.hygieneauditor.ui.Labels.shortTime(f.firstSeen());
+    }
+
+    public String getFirstSeenAgo() {
+        return io.jenkins.plugins.hygieneauditor.ui.Labels.ago(f.firstSeen());
+    }
+
     public String getCategoryLabel() {
         return io.jenkins.plugins.hygieneauditor.ui.Labels.category(f.category());
     }

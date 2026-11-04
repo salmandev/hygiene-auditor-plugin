@@ -39,6 +39,37 @@ class ScanHistoryStoreTest {
     }
 
     @Test
+    void collectorSummariesSurviveAReloadAndOlderFilesWithoutThemStillLoad() throws Exception {
+        ScanHistoryStore s = ScanHistoryStore.open(dir);
+        s.append(new ScanHistoryEntry(
+                "with",
+                "manual",
+                Instant.parse("2026-01-01T00:00:00Z"),
+                "COMPLETED",
+                Map.of("JOBS", 1),
+                Map.of("LOW", 1),
+                List.of(
+                        new CollectorSummary("jobs", "COMPLETE", 42, 1),
+                        new CollectorSummary("agents", "PARTIAL", 3, 0))));
+        var again = ScanHistoryStore.open(dir).all().get(0);
+        assertEquals(
+                List.of(
+                        new CollectorSummary("jobs", "COMPLETE", 42, 1),
+                        new CollectorSummary("agents", "PARTIAL", 3, 0)),
+                again.collectors());
+
+        // a file written before this field existed
+        Files.writeString(
+                dir.resolve(ScanHistoryStore.FILE_NAME),
+                "{\"schemaVersion\":1,\"scans\":[{\"scanId\":\"old\",\"trigger\":\"scheduled\",\"end\":\"2025-12-01T00:00:00Z\","
+                        + "\"state\":\"COMPLETED\",\"openByCategory\":{\"JOBS\":2},\"openBySeverity\":{\"LOW\":2}}]}");
+        var old = ScanHistoryStore.open(dir).all();
+        assertEquals(1, old.size());
+        assertTrue(old.get(0).collectors().isEmpty());
+        assertEquals(2, old.get(0).totalOpen());
+    }
+
+    @Test
     void isBoundedKeepingTheNewest() throws Exception {
         ScanHistoryStore s = ScanHistoryStore.open(dir);
         for (int i = 0; i < ScanHistoryStore.MAX_ENTRIES + 25; i++) {

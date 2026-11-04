@@ -174,6 +174,30 @@ class ExportEndpointsTest {
     }
 
     @Test
+    void aPlanForOneFindingIgnoresTheConfidenceFloorButNotVisibility() throws Exception {
+        j.createFreeStyleProject("p1");
+        Finding low = finding("job.stale", Category.JOBS, "job", "p1", Confidence.LOW);
+        Finding agent = finding("agent.offline", Category.AGENTS, "agent", "secret-node", Confidence.HIGH);
+        seed(low, agent, finding("job.stale", Category.JOBS, "job", "other", Confidence.HIGH));
+        String plan = as("admin")
+                .goTo(BASE + "removalPlan?id=" + low.id(), null)
+                .getWebResponse()
+                .getContentAsString();
+        assertTrue(plan.contains("name: 'p1'"), "a LOW finding is included when asked for by id: " + plan);
+        assertFalse(plan.contains("'other'"), "and nothing else is");
+        String viewer = as("viewer")
+                .goTo(BASE + "removalPlan?id=" + agent.id(), null)
+                .getWebResponse()
+                .getContentAsString();
+        assertFalse(viewer.contains("secret-node"), "an id the user may not see yields an empty plan");
+        assertTrue(as("admin")
+                .goTo(BASE + "removalPlan?id=" + agent.id(), null)
+                .getWebResponse()
+                .getContentAsString()
+                .contains("secret-node"));
+    }
+
+    @Test
     void generatingAPlanChangesNothing() throws Exception {
         j.createFreeStyleProject("sure");
         seed(finding("job.stale", Category.JOBS, "job", "sure", Confidence.HIGH));

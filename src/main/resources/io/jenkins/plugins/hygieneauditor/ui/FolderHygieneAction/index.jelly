@@ -3,9 +3,19 @@
   <l:layout title="${%Hygiene Auditor}" type="one-column">
     <st:adjunct includes="io.jenkins.plugins.hygieneauditor.style"/>
     <l:main-panel>
-      <l:app-bar title="${%Hygiene Auditor}: ${it.folder.fullDisplayName}"/>
-      <p>${%Findings for this folder, limited to what you are allowed to see. Read-only.}</p>
-      <st:include it="${it.panel}" page="table.jelly"/>
+      <j:set var="panel" value="${it.panel}"/>
+      <div class="ha-page">
+        <header class="ha-top">
+          <div>
+            <h1 class="ha-h1">${%Folder hygiene}</h1>
+            <p class="ha-subtitle">${it.folder.fullDisplayName} · ${%Findings for this folder, limited to what you are allowed to see. Read-only.}</p>
+          </div>
+        </header>
+        <div class="ha-main">
+          <section class="ha-card ha-findings"><st:include it="${panel}" page="table.jelly"/></section>
+          <aside class="ha-side"><st:include it="${panel}" page="panel.jelly"/></aside>
+        </div>
+      </div>
     </l:main-panel>
   </l:layout>
 </j:jelly>

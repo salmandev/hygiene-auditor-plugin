@@ -4,93 +4,124 @@
     <st:adjunct includes="io.jenkins.plugins.hygieneauditor.style"/>
     <l:main-panel>
       <j:set var="summary" value="${it.summary}"/>
-      <l:app-bar title="${%Hygiene Auditor}">
-        <j:if test="${it.canConfigure}">
-          <a href="${rootURL}/manage/configure" class="jenkins-button">${%Settings}</a>
-        </j:if>
-      </l:app-bar>
+      <j:set var="scan" value="${it.lastScanView}"/>
+      <j:set var="ring" value="${it.ringFor(summary)}"/>
+      <j:set var="panel" value="${it.panel}"/>
+      <div class="ha-page">
 
-      <p>${%Read-only report of what is likely unused. Every finding states its evidence and how confident the auditor is; nothing here is ever deleted or changed automatically.}</p>
+        <header class="ha-top">
+          <div>
+            <h1 class="ha-h1">${%Controller hygiene}</h1>
+            <p class="ha-subtitle" role="status">
+              <j:choose>
+                <j:when test="${summary.scanRunning}">
+                  <j:set var="run" value="${it.runningScan.get()}"/>
+                  <strong>${%A scan is running.}</strong>
+                  <j:forEach var="e" items="${run.itemsExamined().entrySet()}"> ${e.key}: ${e.value} </j:forEach>
+                </j:when>
+                <j:when test="${scan != null}">
+                  ${%Last scan} <time datetime="${scan.endedIso()}" title="${scan.endedIso()}">${scan.endedAgo()}</time>
+                  <j:if test="${it.itemsExamined(scan) gt 0}"><span class="ha-sep">·</span>${it.itemsExamined(scan)} ${%items examined}</j:if>
+                  <span class="ha-sep">·</span>${scan.stateLabel()}<span class="ha-sep">·</span>${%read-only, nothing is changed}
+                </j:when>
+                <j:otherwise>${%No scan has run yet.} ${%Start one, or set a schedule in the settings.}</j:otherwise>
+              </j:choose>
+            </p>
+            <j:if test="${scan != null and !empty(scan.chips())}">
+              <ul class="ha-chips" aria-label="${%Collectors}">
+                <j:forEach var="c" items="${scan.chips()}">
+                  <li class="ha-chip ha-chip-${c.status().toLowerCase()}" title="${c.statusLabel()}: ${c.items()} ${%items checked}${c.message() != null ? ' — ' + c.message() : ''}">
+                    <span class="ha-dot"></span><span>${c.name()}</span><b>${c.findings()}</b>
+                  </li>
+                </j:forEach>
+              </ul>
+            </j:if>
+          </div>
 
-      <div class="ha-toolbar">
-        <j:if test="${it.canScan}">
-          <j:choose>
-            <j:when test="${summary.scanRunning}">
-              <f:form method="post" action="cancel" name="cancel">
-                <input type="hidden" name="fromUi" value="true"/>
-                <button type="submit" class="jenkins-button jenkins-!-destructive-color">${%Cancel scan}</button>
-              </f:form>
-            </j:when>
-            <j:otherwise>
-              <f:form method="post" action="scan" name="scan">
-                <input type="hidden" name="fromUi" value="true"/>
-                <button type="submit" class="jenkins-button jenkins-button--primary">${%Scan now}</button>
-              </f:form>
-            </j:otherwise>
-          </j:choose>
-        </j:if>
-      </div>
+          <div class="ha-top-actions">
+            <details class="ha-menu">
+              <summary class="ha-btn">${%Export}</summary>
+              <div class="ha-menu-list">
+                <a href="exportCsv?${panel.exportQuery}">${%Findings as CSV}</a>
+                <a href="exportJson?${panel.exportQuery}">${%Findings as JSON}</a>
+                <div class="ha-menu-head">${%Removal plan}</div>
+                <a href="removalPlan?format=groovy">${%Groovy script}</a>
+                <a href="removalPlan?format=cli">${%Shell commands}</a>
+                <a href="removalPlan?format=checklist">${%Checklist}</a>
+              </div>
+            </details>
+            <j:if test="${it.canConfigure}">
+              <a href="${rootURL}/manage/configure" class="ha-btn">${%Settings}</a>
+            </j:if>
+            <j:if test="${it.canScan}">
+              <j:choose>
+                <j:when test="${summary.scanRunning}">
+                  <f:form method="post" action="cancel" name="cancel">
+                    <input type="hidden" name="fromUi" value="true"/>
+                    <button type="submit" class="ha-btn ha-btn-danger">${%Cancel scan}</button>
+                  </f:form>
+                </j:when>
+                <j:otherwise>
+                  <f:form method="post" action="scan" name="scan">
+                    <input type="hidden" name="fromUi" value="true"/>
+                    <button type="submit" class="ha-btn ha-btn-primary">${%Scan now}</button>
+                  </f:form>
+                </j:otherwise>
+              </j:choose>
+            </j:if>
+          </div>
+        </header>
 
-      <div class="ha-status" role="status">
-        <j:choose>
-          <j:when test="${summary.scanRunning}">
-            <j:set var="run" value="${it.runningScan.get()}"/>
-            <strong>${%A scan is running.}</strong>
-            <j:forEach var="e" items="${run.itemsExamined().entrySet()}"> ${e.key}: ${e.value}</j:forEach>
-          </j:when>
-          <j:when test="${summary.lastScanEnd != null}">
-            ${%Last scan}: <time datetime="${summary.lastScanEnd}">${summary.lastScanEnd}</time> (${summary.lastScanState})
-            <j:forEach var="c" items="${summary.lastScanCollectors}">
-              <br/>${c.collector}: ${c.status}, ${c.items} ${%items}, ${c.findings} ${%findings}<j:if test="${c.message != null}"> — ${c.message}</j:if>
-            </j:forEach>
-          </j:when>
-          <j:otherwise>${%No scan has run yet.}</j:otherwise>
-        </j:choose>
-      </div>
-
-      <h2>${%Open findings}</h2>
-      <div class="ha-cards">
-        <section class="ha-card" aria-labelledby="ha-h-cat">
-          <h3 id="ha-h-cat">${%By category}</h3>
-          <dl><j:forEach var="e" items="${summary.openByCategory.entrySet()}"><dt>${it.categoryLabel(e.key)}</dt><dd>${e.value}</dd></j:forEach></dl>
+        <!-- review progress ring + one card per category -->
+        <section class="ha-cards-row" aria-label="${%Summary}">
+          <div class="ha-card ha-ring-card">
+            <svg class="ha-ring" viewBox="0 0 100 100" width="96" height="96" role="img" aria-label="${%Review progress}: ${ring.percent()}%">
+              <circle class="ha-ring-track" cx="50" cy="50" r="42"></circle>
+              <circle class="ha-ring-value" cx="50" cy="50" r="42" transform="rotate(-90 50 50)" stroke-dasharray="${ring.filled()}, ${ring.rest()}"></circle>
+              <text x="50" y="57" text-anchor="middle">${ring.percent()}%</text>
+            </svg>
+            <div>
+              <div class="ha-ring-label">${%Review progress}</div>
+              <div class="ha-ring-headline">${ring.headline()}</div>
+              <div class="ha-ring-detail">${ring.detail()}<j:if test="${!empty(ring.delta())}"><br/>${ring.delta()}</j:if></div>
+            </div>
+          </div>
+          <j:forEach var="c" items="${it.cardsFor(summary)}">
+            <a class="ha-card ha-metric" href="${c.url()}">
+              <div class="ha-metric-label">${c.label()}</div>
+              <div class="ha-metric-n">${c.count()}</div>
+              <div class="ha-metric-pill"><j:if test="${!empty(c.pill())}"><span class="ha-pill ha-pill-${c.tone()}">${c.pill()}</span></j:if></div>
+            </a>
+          </j:forEach>
         </section>
-        <section class="ha-card" aria-labelledby="ha-h-sev">
-          <h3 id="ha-h-sev">${%By severity}</h3>
-          <dl><j:forEach var="e" items="${summary.openBySeverity.entrySet()}"><dt>${it.severityLabel(e.key)}</dt><dd>${e.value}</dd></j:forEach></dl>
-        </section>
-        <section class="ha-card" aria-labelledby="ha-h-conf">
-          <h3 id="ha-h-conf">${%By confidence}</h3>
-          <dl><j:forEach var="e" items="${summary.openByConfidence.entrySet()}"><dt>${it.confidenceLabel(e.key)}</dt><dd>${e.value}</dd></j:forEach></dl>
-        </section>
-        <section class="ha-card" aria-labelledby="ha-h-st">
-          <h3 id="ha-h-st">${%By status}</h3>
-          <dl><j:forEach var="e" items="${summary.byStatus.entrySet()}"><dt>${it.statusLabel(e.key)}</dt><dd>${e.value}</dd></j:forEach></dl>
-        </section>
-      </div>
 
-      <h2>${%Trend}</h2>
-      <j:choose>
-        <j:when test="${!it.trendVisible}"><p class="ha-empty">${%The trend covers the whole instance and is shown to administrators only.}</p></j:when>
-        <j:otherwise>
-          <j:set var="svg" value="${it.trendSvg}"/>
-          <j:choose>
-            <j:when test="${empty(svg)}"><p class="ha-empty">${%The trend appears after at least two scans.}</p></j:when>
-            <j:otherwise><j:out value="${svg}"/></j:otherwise>
-          </j:choose>
-        </j:otherwise>
-      </j:choose>
-
-      <h2>${%Findings}</h2>
-      <st:include it="${it.panel}" page="table.jelly"/>
-
-      <h2>${%Export and removal plan}</h2>
-      <p>${%Downloads use the filter above. A removal plan is a script or checklist for you to review and run yourself; it only lists findings with high confidence by default and never runs anything.}</p>
-      <div class="ha-toolbar">
-        <a class="jenkins-button" href="exportCsv?${it.panel.exportQuery}">${%Download CSV}</a>
-        <a class="jenkins-button" href="exportJson?${it.panel.exportQuery}">${%Download JSON}</a>
-        <a class="jenkins-button" href="removalPlan?format=groovy">${%Removal plan (Groovy)}</a>
-        <a class="jenkins-button" href="removalPlan?format=cli">${%Removal plan (shell)}</a>
-        <a class="jenkins-button" href="removalPlan?format=checklist">${%Removal plan (checklist)}</a>
+        <div class="ha-main">
+          <section class="ha-card ha-findings">
+            <st:include it="${panel}" page="table.jelly"/>
+          </section>
+          <aside class="ha-side">
+            <st:include it="${panel}" page="panel.jelly"/>
+            <section class="ha-card ha-panel" aria-label="${%Trend}">
+              <div class="ha-side-title">${%Open findings over time}</div>
+              <j:choose>
+                <j:when test="${!it.trendVisible}"><p class="ha-muted">${%The trend covers the whole instance and is shown to administrators only.}</p></j:when>
+                <j:otherwise>
+                  <j:set var="svg" value="${it.trendSvg}"/>
+                  <j:choose>
+                    <j:when test="${empty(svg)}"><p class="ha-muted">${%The trend appears after at least two scans.}</p></j:when>
+                    <j:otherwise>
+                      <ul class="ha-legend">
+                        <li><span class="ha-swatch"></span>${%All open findings}</li>
+                        <li><span class="ha-swatch ha-swatch-high"></span>${%High severity}</li>
+                      </ul>
+                      <j:out value="${svg}"/>
+                    </j:otherwise>
+                  </j:choose>
+                </j:otherwise>
+              </j:choose>
+            </section>
+          </aside>
+        </div>
       </div>
     </l:main-panel>
   </l:layout>

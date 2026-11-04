@@ -97,15 +97,19 @@ class UiPagesTest {
         HtmlPage page = as("admin").goTo(BASE);
         String text = page.asNormalizedText();
         assertTrue(text.contains("Hygiene Auditor"));
-        assertTrue(text.contains("By category") && text.contains("By severity") && text.contains("By confidence"));
+        assertTrue(text.contains("Controller hygiene"));
+        assertTrue(text.contains("Review progress"), "the ring");
+        assertEquals(5, page.getByXPath("//a[contains(@class,'ha-metric')]").size(), "one card per category");
+        assertTrue(text.contains("Jobs and folders") && text.contains("Credentials") && text.contains("Agents"));
         assertTrue(text.contains("No scan has run yet"));
         HtmlElement caption = page.getFirstByXPath("//table[contains(@class,'ha-table')]/caption");
         assertNotNull(caption, "table has a caption");
-        assertTrue(caption.asNormalizedText().contains("1–2 / 2"), caption.asNormalizedText());
+        assertTrue(caption.asNormalizedText().contains("1–2 of 2"), caption.asNormalizedText());
         assertEquals(
-                6,
+                4,
                 page.getByXPath("//table[contains(@class,'ha-table')]/thead/tr/th[@scope='col']")
-                        .size());
+                        .size(),
+                "confidence, finding (with type and severity beneath), evidence, last seen");
         assertNotNull(page.getFormByName("scan"), "admin can start a scan");
         assertTrue(text.contains("Medium") && text.contains("High"), "badges carry text, not only colour");
         assertTrue(text.contains("The trend appears after at least two scans"));
@@ -115,7 +119,7 @@ class UiPagesTest {
     void filtersNarrowTheTableAndPagingLinksCarryThem() throws Exception {
         JenkinsRule.WebClient wc = as("admin");
         HtmlPage high = wc.goTo(BASE + "?minConfidence=HIGH");
-        assertTrue(high.asNormalizedText().contains("1–1 / 1"));
+        assertTrue(high.asNormalizedText().contains("1–1 of 1"));
         HtmlPage none = wc.goTo(BASE + "?category=AGENTS");
         assertTrue(none.asNormalizedText().contains("No findings match the current filter"));
         HtmlPage paged = wc.goTo(BASE + "?limit=1");
@@ -159,7 +163,7 @@ class UiPagesTest {
     void viewerSeesFindingsButNoScanOrDecisionControls() throws Exception {
         JenkinsRule.WebClient wc = as("viewer");
         HtmlPage page = wc.goTo(BASE);
-        assertTrue(page.asNormalizedText().contains("1–2 / 2"));
+        assertTrue(page.asNormalizedText().contains("1–2 of 2"));
         assertTrue(page.getForms().stream()
                 .noneMatch(f -> "scan".equals(f.getNameAttribute()) || "cancel".equals(f.getNameAttribute())));
         HtmlPage detail = wc.goTo(BASE + "finding/" + stale.id() + "/");
@@ -195,15 +199,143 @@ class UiPagesTest {
     }
 
     @Test
+    void theHeaderShowsCollectorChipsFromSavedHistoryAfterARestart() throws Exception {
+        FindingStoreHolder.get()
+                .history()
+                .append(new ScanHistoryEntry(
+                        "s1",
+                        "scheduled",
+                        Instant.now().minusSeconds(300),
+                        "COMPLETED",
+                        Map.of("JOBS", 2),
+                        Map.of("LOW", 2),
+                        List.of(
+                                new io.jenkins.plugins.hygieneauditor.store.CollectorSummary(
+                                        "jobs", "COMPLETE", 120, 2),
+                                new io.jenkins.plugins.hygieneauditor.store.CollectorSummary(
+                                        "agents", "PARTIAL", 3, 0))));
+        HtmlPage page = as("admin").goTo(BASE);
+        String text = page.asNormalizedText();
+        assertTrue(text.contains("Last scan"), text);
+        assertTrue(
+                text.contains("5 min ago") || text.contains("4 min") || text.contains("5 min"),
+                "relative time: " + text);
+        assertTrue(text.contains("ago"), "reads as 'ago', not a bare duration");
+        assertFalse(
+                page.getByXPath("//li[contains(@class,'ha-chip-partial')]").isEmpty(),
+                "a partial collector is flagged");
+        assertEquals(2, page.getByXPath("//li[contains(@class,'ha-chip')]").size());
+        assertTrue(text.contains("Jobs and folders") && text.contains("Agents"), "localised collector names, not ids");
+    }
+
+    @Test
+    void timestampsAreHumanNotRawNanosecondIso() throws Exception {
+        HtmlPage detail = as("admin").goTo(BASE + "finding/" + stale.id() + "/");
+        String text = detail.asNormalizedText();
+        assertTrue(text.matches("(?s).*\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2} UTC.*"), text);
+        assertFalse(
+                text.matches("(?s).*T\\d{2}:\\d{2}:\\d{2}\\.\\d{3,}Z.*"), "no raw fractional ISO in the visible text");
+        String list = as("admin").goTo(BASE).asNormalizedText();
+        assertFalse(list.matches("(?s).*T\\d{2}:\\d{2}:\\d{2}\\.\\d{3,}Z.*"), "nor on the dashboard");
+    }
+
+    @Test
+    void typesAndStatusesUsePlainLanguage() throws Exception {
+        String text = as("admin").goTo(BASE).asNormalizedText();
+        assertTrue(text.contains("Stale job") && !text.contains("job.stale"), text);
+    }
+
+    @Test
+    void theSidePanelShowsWhyForTheFirstRowAndFollowsASelection() throws Exception {
+        JenkinsRule.WebClient wc = as("admin");
+        // Worst first: the MEDIUM-severity finding (evil) leads, so it is the default selection.
+        HtmlPage first = wc.goTo(BASE);
+        String firstPanel = panel(first);
+        assertTrue(firstPanel.contains("Why we think it is unused"), firstPanel);
+        assertTrue(
+                firstPanel.contains("<img src=x onerror=window.pwned=1>"),
+                "its evidence, shown as text: " + firstPanel);
+        assertTrue(firstPanel.contains("What was not checked"), "caveats are shown, not hidden: " + firstPanel);
+        assertTrue(
+                firstPanel.contains("Confirm with the owner first"),
+                "plain-language reading of the confidence: " + firstPanel);
+        assertEquals(
+                1, first.getByXPath("//tr[contains(@class,'ha-row-selected')]").size(), "exactly one highlighted row");
+        assertEquals(
+                1,
+                first.getByXPath("//a[contains(@href,'removalPlan') and contains(@href,'id=" + evil.id() + "')]")
+                        .size());
+
+        HtmlPage other = wc.goTo(BASE + "?selected=" + stale.id());
+        String otherPanel = panel(other);
+        assertTrue(
+                otherPanel.contains("Last build started 400 days ago"),
+                "the selection drives the panel: " + otherPanel);
+        assertFalse(otherPanel.contains("onerror"), otherPanel);
+        assertEquals(
+                1,
+                other.getByXPath("//a[contains(@href,'removalPlan') and contains(@href,'id=" + stale.id() + "')]")
+                        .size(),
+                "plan for exactly this finding");
+        assertEquals(
+                0,
+                other.getByXPath("//a[contains(@href,'removalPlan') and contains(@href,'id=" + evil.id() + "')]")
+                        .size());
+        assertEquals(
+                1, other.getByXPath("//tr[contains(@class,'ha-row-selected')]").size());
+    }
+
+    private static String panel(HtmlPage page) {
+        return ((HtmlElement) page.getFirstByXPath("//section[@aria-label='Selected finding']")).asNormalizedText();
+    }
+
+    @Test
+    void categoryPillsCountFindingsAndKeepTheOtherFilters() throws Exception {
+        HtmlPage page = as("admin").goTo(BASE + "?minConfidence=HIGH");
+        var pills = page.<HtmlElement>getByXPath("//nav[@aria-label='Filter by category']/a");
+        assertEquals("All 1", pills.get(0).asNormalizedText(), "counted under the other filters");
+        assertTrue(pills.get(0).getAttribute("class").contains("ha-fpill-active"));
+        assertEquals("Jobs and folders 1", pills.get(1).asNormalizedText());
+        assertTrue(pills.get(1).getAttribute("href").contains("minConfidence=HIGH"), "the pill keeps the filter");
+        assertTrue(pills.get(1).getAttribute("href").contains("category=JOBS"));
+        HtmlPage jobs = as("admin").goTo(BASE + "?category=JOBS");
+        assertTrue(jobs.<HtmlElement>getByXPath(
+                        "//nav[@aria-label='Filter by category']/a[contains(@class,'ha-fpill-active')]")
+                .get(0)
+                .asNormalizedText()
+                .startsWith("Jobs and folders"));
+    }
+
+    @Test
+    void theReviewRingCountsDecisionsAndSaysSo() throws Exception {
+        FindingStoreHolder.get()
+                .store()
+                .setStatus(stale.id(), Status.ACKNOWLEDGED, "fine", null, "admin", Instant.now());
+        String text = as("admin").goTo(BASE).asNormalizedText();
+        assertTrue(text.contains("Review progress"), text);
+        assertTrue(text.contains("1 of 2 findings have a decision"), text);
+        assertTrue(text.contains("On track"), "50% reads as on track: " + text);
+    }
+
+    @Test
     void pageUsesThemeVariablesAndNoInlineScripts() throws Exception {
         HtmlPage page = as("admin").goTo(BASE);
         assertTrue(page.getByXPath("//main//script[not(@src)]").isEmpty(), "no inline script in our content");
         String css = new String(getClass()
                 .getResourceAsStream("/io/jenkins/plugins/hygieneauditor/style.css")
                 .readAllBytes());
-        assertTrue(css.contains("var(--text-color") && css.contains("var(--card-border-color"));
+        // Light palette by default; the dark palette follows Jenkins' own theme switch, in both of its forms.
+        assertTrue(css.contains("html[data-theme=\"dark\"] .ha-page"), "fixed dark theme");
+        assertTrue(
+                css.contains("prefers-color-scheme: dark") && css.contains("html[data-theme=\"dark-system\"] .ha-page"),
+                "system-following dark theme");
+        assertTrue(
+                css.contains("var(--ha-card)") && css.contains("var(--ha-text)"),
+                "components use the palette variables");
+        // Nothing outside the palette definitions may hard-code a text or card colour.
+        String componentRules = css.substring(css.indexOf("/* ---- header */"));
         assertFalse(
-                css.matches("(?s).*#[0-9a-fA-F]{6}[^)]*;.*") && !css.contains("var("),
-                "colours come from theme variables");
+                componentRules.matches("(?s).*\\b(?:color|background):\\s*#[0-9a-fA-F]{3,8}\\b.*"),
+                "colours come from the palette variables");
     }
 }

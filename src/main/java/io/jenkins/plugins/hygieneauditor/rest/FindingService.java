@@ -47,6 +47,23 @@ public final class FindingService {
         return new Page(matching.subList(from, to), matching.size());
     }
 
+    /** How many findings each category has under the other filters; drives the count on each category pill. */
+    @NonNull
+    public static Map<Category, Integer> categoryCounts(@NonNull FindingQuery q) throws IOException {
+        FindingQuery anyCategory = new FindingQuery(
+                java.util.Set.of(), q.statuses(), q.minConfidence(), q.minSeverity(), q.folder(), q.limit(), 0);
+        Map<Category, Integer> out = new EnumMap<>(Category.class);
+        for (Category c : Category.values()) {
+            out.put(c, 0);
+        }
+        for (Finding f : visible()) {
+            if (anyCategory.matches(f)) {
+                out.merge(f.category(), 1, Integer::sum);
+            }
+        }
+        return out;
+    }
+
     /** Counts of OPEN findings, grouped. Used by the summary endpoint, the dashboard and the pipeline step. */
     public record Counts(
             Map<Category, Integer> byCategory,

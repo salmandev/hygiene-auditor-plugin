@@ -1,0 +1,45 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+  <j:set var="s" value="${it.selected}"/>
+  <section class="ha-card ha-panel" aria-label="${%Selected finding}">
+    <j:choose>
+      <j:when test="${s != null}">
+        <div class="ha-panel-head">
+          <span class="ha-mono">${s.subjectDisplayName}</span>
+          <span class="ha-pill ha-conf-${s.confidence.toLowerCase()}">${s.confidenceLabel}</span>
+        </div>
+        <p class="ha-muted ha-panel-sub">${s.typeLabel} · <span class="ha-sev ha-sev-${s.severity.toLowerCase()}">${s.severityLabel} ${%severity}</span></p>
+
+        <h3>${%Why we think it is unused}</h3>
+        <ul>
+          <j:forEach var="w" items="${s.whyLines}"><li>${w}</li></j:forEach>
+        </ul>
+        <j:if test="${!empty(s.caveatLines)}">
+          <h3>${%What was not checked}</h3>
+          <ul class="ha-caveats">
+            <j:forEach var="c" items="${s.caveatLines}"><li>${c}</li></j:forEach>
+          </ul>
+        </j:if>
+        <p class="ha-note">${s.confidenceNote}</p>
+
+        <div class="ha-panel-actions">
+          <j:if test="${s.statusAction != null and s.status == 'OPEN'}">
+            <f:form method="post" action="${s.statusAction}" name="acknowledge">
+              <input type="hidden" name="id" value="${s.id}"/>
+              <input type="hidden" name="status" value="ACKNOWLEDGED"/>
+              <input type="hidden" name="fromUi" value="true"/>
+              <button type="submit" class="ha-btn">${%Acknowledge}</button>
+            </f:form>
+          </j:if>
+          <j:if test="${it.global}">
+            <a class="ha-btn ha-btn-primary" href="removalPlan?format=${s.removalSupported ? 'groovy' : 'checklist'}&amp;id=${s.id}">${%Removal plan}</a>
+          </j:if>
+        </div>
+        <a class="ha-panel-link" href="finding/${s.id}/">${%Full evidence and decisions} →</a>
+      </j:when>
+      <j:otherwise>
+        <p class="ha-muted">${%Select a finding to see why it was flagged.}</p>
+      </j:otherwise>
+    </j:choose>
+  </section>
+</j:jelly>

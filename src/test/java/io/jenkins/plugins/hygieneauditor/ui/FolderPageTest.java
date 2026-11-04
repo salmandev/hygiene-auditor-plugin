@@ -97,7 +97,7 @@ class FolderPageTest {
         String text = page.asNormalizedText();
         assertTrue(text.contains("a/j1") && text.contains("cred-a"), text);
         assertFalse(text.contains("b/j1") || text.contains("node1"), "other folders and global findings stay hidden");
-        assertTrue(text.contains("1–2 / 2"));
+        assertTrue(text.contains("1–2 of 2"));
         assertTrue(page.getForms().stream().noneMatch(f -> "scan".equals(f.getNameAttribute())), "read-only");
     }
 

@@ -3,64 +3,88 @@
   <l:layout title="${it.subjectDisplayName}" type="one-column">
     <st:adjunct includes="io.jenkins.plugins.hygieneauditor.style"/>
     <l:main-panel>
-      <l:app-bar title="${it.subjectDisplayName}">
-        <a href="../.." class="jenkins-button">${%Back to findings}</a>
-      </l:app-bar>
-
-      <div class="ha-detail">
-        <dl>
-          <dt>${%Type}</dt><dd>${it.type}</dd>
-          <dt>${%Category}</dt><dd>${it.categoryLabel}</dd>
-          <dt>${%Subject}</dt><dd>${it.subject}</dd>
-          <dt>${%Severity}</dt><dd><span class="ha-badge ha-sev-${it.severity.toLowerCase()}">${it.severityLabel}</span></dd>
-          <dt>${%Confidence}</dt><dd><span class="ha-badge ha-conf-${it.confidence.toLowerCase()}">${it.confidenceLabel}</span></dd>
-          <dt>${%Status}</dt>
-          <dd>${it.statusLabel}<j:if test="${it.statusReason != null}"> — ${it.statusReason}</j:if><j:if test="${it.snoozeUntil != null}"> (${%until} ${it.snoozeUntil})</j:if></dd>
-          <dt>${%First seen}</dt><dd><time datetime="${it.firstSeen}">${it.firstSeen}</time></dd>
-          <dt>${%Last seen}</dt><dd><time datetime="${it.lastSeen}">${it.lastSeen}</time></dd>
-          <dt>${%Suggested action}</dt><dd>${it.suggestedAction}</dd>
-        </dl>
-      </div>
-
-      <h2>${%Evidence}</h2>
-      <p>${%Positive weights support the conclusion that the subject is unused; zero is informational. Confidence is computed from these weights and lowered by every caveat listed.}</p>
-      <table class="jenkins-table ha-table">
-        <caption>${%Evidence behind this finding}</caption>
-        <thead><tr><th scope="col">${%Source}</th><th scope="col">${%Observation}</th><th scope="col">${%Weight}</th></tr></thead>
-        <tbody>
-          <j:forEach var="e" items="${it.evidence}">
-            <tr><td>${e.source}</td><td>${e.text}</td><td>${e.weight}</td></tr>
-          </j:forEach>
-        </tbody>
-      </table>
-
-      <j:if test="${it.statusAction != null}">
-        <h2>${%Decision}</h2>
-        <f:form method="post" action="${it.statusAction}" name="status">
-          <input type="hidden" name="id" value="${it.id}"/>
-          <input type="hidden" name="fromUi" value="true"/>
-          <div class="ha-statusform">
-            <div>
-              <label for="ha-s-status">${%Set status}</label>
-              <select id="ha-s-status" name="status" class="jenkins-select__input">
-                <option value="OPEN">${%Open}</option>
-                <option value="ACKNOWLEDGED">${%Acknowledged}</option>
-                <option value="IGNORED">${%Ignored}</option>
-              </select>
+      <div class="ha-page">
+        <header class="ha-detail-top">
+          <div>
+            <a class="ha-back" href="../..">← ${%Back to findings}</a>
+            <div class="ha-detail-title">
+              <h1 class="ha-mono">${it.subjectDisplayName}</h1>
+              <span class="ha-pill ha-conf-${it.confidence.toLowerCase()}">${it.confidenceLabel} ${%confidence}</span>
+              <span class="ha-sev ha-sev-${it.severity.toLowerCase()}">${it.severityLabel} ${%severity}</span>
+              <span class="ha-status ha-status-${it.status.toLowerCase()}">${it.statusLabel}<j:if test="${it.statusReason != null}"> — ${it.statusReason}</j:if><j:if test="${it.snoozeUntil != null}"> (${%until} ${it.snoozeUntil})</j:if></span>
             </div>
-            <div>
-              <label for="ha-s-reason">${%Reason}</label>
-              <input id="ha-s-reason" name="reason" type="text" class="jenkins-input" maxlength="500" aria-describedby="ha-s-reason-hint"/>
-              <small id="ha-s-reason-hint">${%Required when ignoring.}</small>
-            </div>
-            <div>
-              <label for="ha-s-snooze">${%Snooze days}</label>
-              <input id="ha-s-snooze" name="snoozeDays" type="number" min="1" class="jenkins-input"/>
-            </div>
-            <div><button type="submit" class="jenkins-button jenkins-button--primary">${%Update status}</button></div>
           </div>
-        </f:form>
-      </j:if>
+        </header>
+
+        <div class="ha-detail-grid">
+          <div>
+            <section class="ha-card">
+              <dl class="ha-facts">
+                <div><dt>${%Finding}</dt><dd title="${it.type}">${it.typeLabel}</dd></div>
+                <div><dt>${%Category}</dt><dd>${it.categoryLabel}</dd></div>
+                <div><dt>${%Subject}</dt><dd>${it.subject}</dd></div>
+                <div><dt>${%First seen}</dt><dd><time datetime="${it.firstSeen}" title="${it.firstSeen}">${it.firstSeenShort}</time> <span class="ha-sep">·</span><span class="ha-muted">${it.firstSeenAgo}</span></dd></div>
+                <div><dt>${%Last seen}</dt><dd><time datetime="${it.lastSeen}" title="${it.lastSeen}">${it.lastSeenShort}</time> <span class="ha-sep">·</span><span class="ha-muted">${it.lastSeenAgo}</span></dd></div>
+              </dl>
+              <div class="ha-callout"><strong>${%Suggested action}</strong><br/>${it.suggestedAction}</div>
+            </section>
+
+            <h2 class="ha-section-title">${%Evidence}</h2>
+            <p class="ha-muted">${%Positive weights support the conclusion that the subject is unused; zero is informational. Confidence is computed from these weights and lowered by every caveat listed.}</p>
+            <section class="ha-card ha-scroll">
+              <table class="ha-table">
+                <caption class="ha-table-caption">${%Evidence behind this finding}</caption>
+                <thead><tr><th scope="col">${%Weight}</th><th scope="col">${%Observation}</th><th scope="col" class="ha-hide-sm">${%Source}</th></tr></thead>
+                <tbody>
+                  <j:forEach var="e" items="${it.evidence}">
+                    <tr>
+                      <td><span class="ha-weight ${e.weight gt 0 ? 'ha-weight-pos' : (e.weight lt 0 ? 'ha-weight-neg' : '')}">${e.weight gt 0 ? '+' : ''}${e.weight}</span></td>
+                      <td>${e.text}</td>
+                      <td class="ha-hide-sm ha-muted">${e.source}</td>
+                    </tr>
+                  </j:forEach>
+                </tbody>
+              </table>
+            </section>
+          </div>
+
+          <aside class="ha-side">
+            <section class="ha-card ha-panel">
+              <h3>${%How sure are we?}</h3>
+              <p class="ha-note">${it.confidenceNote}</p>
+            </section>
+            <j:if test="${it.statusAction != null}">
+              <section class="ha-card">
+                <div class="ha-panel"><h3>${%Decision}</h3></div>
+                <f:form method="post" action="${it.statusAction}" name="status">
+                  <input type="hidden" name="id" value="${it.id}"/>
+                  <input type="hidden" name="fromUi" value="true"/>
+                  <div class="ha-form">
+                    <div>
+                      <label for="ha-s-status">${%Set status}</label>
+                      <select id="ha-s-status" name="status">
+                        <option value="OPEN">${%Open}</option>
+                        <option value="ACKNOWLEDGED">${%Acknowledged}</option>
+                        <option value="IGNORED">${%Ignored}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="ha-s-reason">${%Reason}</label>
+                      <input id="ha-s-reason" name="reason" type="text" maxlength="500" aria-describedby="ha-s-reason-hint"/>
+                      <small id="ha-s-reason-hint" class="ha-muted">${%Required when ignoring.}</small>
+                    </div>
+                    <div>
+                      <label for="ha-s-snooze">${%Snooze days}</label>
+                      <input id="ha-s-snooze" name="snoozeDays" type="number" min="1"/>
+                    </div>
+                    <div><button type="submit" class="ha-btn ha-btn-primary">${%Update status}</button></div>
+                  </div>
+                </f:form>
+              </section>
+            </j:if>
+          </aside>
+        </div>
+      </div>
     </l:main-panel>
   </l:layout>
 </j:jelly>
