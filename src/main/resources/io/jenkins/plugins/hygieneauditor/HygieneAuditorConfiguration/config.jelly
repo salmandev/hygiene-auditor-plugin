@@ -2,7 +2,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
   <f:section title="${%Hygiene Auditor}">
     <f:entry title="${%Scan schedule}" field="scanCron">
-      <f:textarea checkMethod="post"/>
+      <f:textarea/>
     </f:entry>
     <f:entry title="${%Collectors}" description="${%Untick a collector to stop it from running.}">
       <j:forEach var="c" items="${descriptor.collectors}">
@@ -24,7 +24,7 @@
     </f:advanced>
     <f:advanced title="${%Notifications}">
       <f:entry title="${%Notify about new findings of at least}" field="notifyMinSeverity"><f:select/></f:entry>
-      <f:entry title="${%Webhook URL}" field="webhookUrl"><f:textbox checkMethod="post"/></f:entry>
+      <f:entry title="${%Webhook URL}" field="webhookUrl"><f:textbox/></f:entry>
       <f:entry title="${%Webhook signing secret}" field="webhookSecret"><f:password/></f:entry>
       <f:entry title="${%Email recipients}" field="emailRecipients"><f:textbox/></f:entry>
     </f:advanced>

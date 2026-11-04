@@ -34,8 +34,7 @@ Not yet built means not scanned: the dashboard only ever reports on the collecto
 
 ## Requirements
 
-* Jenkins **2.555.3** or newer (the build baseline), Java 21.
-* Optional plugins, each enabling one feature: **Credentials** (credentials collector), **Folders** (per-folder page),
+Optional plugins each enable one feature: **Credentials** (credentials collector), **Folders** (per-folder page),
   **Pipeline** (`hygieneScan` step, and reading the Jenkinsfile of recent runs), **Mailer** (email notifications),
   **Configuration as Code** (JCasC).
 
