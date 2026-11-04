@@ -140,13 +140,30 @@ class ExportEndpointsTest {
     }
 
     @Test
-    void viewModeShowsThePlanInTheBrowserInsteadOfDownloadingIt() throws Exception {
+    void thePlanPageShowsTheScriptWithCopyAndDownloadAndEscapesIt() throws Exception {
+        seed(finding("job.stale", Category.JOBS, "job", "<b>sure</b>", Confidence.HIGH));
+        var page = (org.htmlunit.html.HtmlPage) as("admin").goTo(BASE + "plan/?format=groovy");
+        String text = page.getElementById("ha-plan-text").getTextContent();
+        assertTrue(text.contains("final boolean DRY_RUN = true"));
+        assertTrue(page.getByXPath("//button[@data-ha-copy='ha-plan-text']").size() == 1);
+        assertTrue(page.getByXPath("//a[contains(@href,'removalPlan?format=groovy')]")
+                        .size()
+                == 1);
+        assertTrue(page.getByXPath("//main//script[not(@src)]").isEmpty());
+        assertTrue(page.getByXPath("//pre[@id='ha-plan-text']//b").isEmpty(), "markup in names stays text");
+    }
+
+    @Test
+    void thePlanPageNeedsViewPermissionAndRejectsUnknownFormats() throws Exception {
         seed(finding("job.stale", Category.JOBS, "job", "sure", Confidence.HIGH));
-        var resp = as("admin").goTo(BASE + "removalPlan?view=true", null).getWebResponse();
-        assertTrue(resp.getContentType().startsWith("text/plain"), resp.getContentType());
-        assertNull(resp.getResponseHeaderValue("Content-Disposition"));
-        assertEquals("nosniff", resp.getResponseHeaderValue("X-Content-Type-Options"));
-        assertTrue(resp.getContentAsString().contains("final boolean DRY_RUN = true"));
+        assertEquals(
+                400,
+                as("admin")
+                        .goTo(BASE + "plan/?format=powershell", null)
+                        .getWebResponse()
+                        .getStatusCode());
+        assertEquals(
+                403, as("nobody").goTo(BASE + "plan/", null).getWebResponse().getStatusCode());
     }
 
     @Test

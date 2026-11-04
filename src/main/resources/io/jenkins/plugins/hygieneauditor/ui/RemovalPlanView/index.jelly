@@ -1,0 +1,48 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout">
+  <l:layout title="${%Removal plan}" type="one-column">
+    <st:adjunct includes="io.jenkins.plugins.hygieneauditor.style"/>
+    <st:adjunct includes="io.jenkins.plugins.hygieneauditor.copy"/>
+    <l:main-panel>
+      <div class="ha-page">
+        <a class="ha-back" href="../">← ${%Back to findings}</a>
+        <header class="ha-top">
+          <div>
+            <h1 class="ha-h1">${%Removal plan}</h1>
+            <p class="ha-subtitle">${%Review it, then run it yourself. Nothing has been changed.}</p>
+          </div>
+          <div class="ha-actions">
+            <button type="button" class="ha-btn ha-btn-primary" data-ha-copy="ha-plan-text">${%Copy}</button>
+            <a class="ha-btn" href="${it.downloadUrl}" title="${it.fileName}">${%Download file}</a>
+          </div>
+        </header>
+
+        <section class="ha-card ha-plan-help">
+          <j:choose>
+            <j:when test="${it.count == 0}">
+              <p>${%No finding qualifies: the plan only includes open findings at high confidence that you may see.}</p>
+            </j:when>
+            <j:otherwise>
+              <j:choose>
+                <j:when test="${it.formatName == 'groovy'}">
+                  <p><strong>${%How to use it}</strong> ${%Paste it into Manage Jenkins, Script Console. It starts as a dry run and only reports what it would do. Set DRY_RUN to false when you are sure.}</p>
+                </j:when>
+                <j:when test="${it.formatName == 'cli'}">
+                  <p><strong>${%How to use it}</strong> ${%Run the commands one at a time from a shell that is logged in to Jenkins CLI.}</p>
+                </j:when>
+                <j:otherwise>
+                  <p><strong>${%How to use it}</strong> ${%Work through the checklist by hand and tick each item once it is done.}</p>
+                </j:otherwise>
+              </j:choose>
+              <p class="ha-muted">${%Items covered}: ${it.count}. ${%Evidence is a snapshot, so the script skips anything that became active after the plan was made.}</p>
+            </j:otherwise>
+          </j:choose>
+        </section>
+
+        <section class="ha-card ha-plan-card">
+          <pre id="ha-plan-text" class="ha-plan" tabindex="0">${it.text}</pre>
+        </section>
+      </div>
+    </l:main-panel>
+  </l:layout>
+</j:jelly>

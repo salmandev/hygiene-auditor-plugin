@@ -391,13 +391,56 @@ public class HygieneAuditorLink extends ManagementLink {
      */
     public void doRemovalPlan(StaplerRequest2 req, StaplerResponse2 rsp) throws IOException {
         Jenkins.get().checkPermission(HygieneAuditorPermissions.VIEW);
-        io.jenkins.plugins.hygieneauditor.export.RemovalPlan.Format format;
-        try {
-            format = io.jenkins.plugins.hygieneauditor.export.RemovalPlan.Format.parse(req.getParameter("format"));
-        } catch (IllegalArgumentException e) {
+        var format = planFormat(req);
+        if (format == null) {
             rsp.sendError(400, "format must be groovy, cli or checklist");
             return;
         }
+        java.util.List<Finding> selected = selectForPlan(req);
+        String user = Jenkins.getAuthentication2().getName();
+        logPlan(user, format, selected.size());
+        download(rsp, format.contentType(), "hygiene-removal-plan." + format.extension());
+        rsp.getWriter()
+                .write(io.jenkins.plugins.hygieneauditor.export.RemovalPlan.generate(
+                        selected, format, user, Instant.now()));
+    }
+
+    /** {@code plan/?format=&id=&...}: the same plan as {@code removalPlan}, shown in a page with Copy and Download. */
+    public io.jenkins.plugins.hygieneauditor.ui.RemovalPlanView getPlan(StaplerRequest2 req) throws IOException {
+        Jenkins.get().checkPermission(HygieneAuditorPermissions.VIEW);
+        var format = planFormat(req);
+        if (format == null) {
+            throw org.kohsuke.stapler.HttpResponses.error(400, "format must be groovy, cli or checklist");
+        }
+        java.util.List<Finding> selected = selectForPlan(req);
+        String user = Jenkins.getAuthentication2().getName();
+        logPlan(user, format, selected.size());
+        String query = req.getQueryString() == null ? "" : "?" + req.getQueryString();
+        return new io.jenkins.plugins.hygieneauditor.ui.RemovalPlanView(
+                format,
+                selected.size(),
+                io.jenkins.plugins.hygieneauditor.export.RemovalPlan.generate(selected, format, user, Instant.now()),
+                "../removalPlan" + query);
+    }
+
+    @CheckForNull
+    private static io.jenkins.plugins.hygieneauditor.export.RemovalPlan.Format planFormat(StaplerRequest2 req) {
+        try {
+            return io.jenkins.plugins.hygieneauditor.export.RemovalPlan.Format.parse(req.getParameter("format"));
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static void logPlan(String user, Object format, int count) {
+        java.util.logging.Logger.getLogger(HygieneAuditorLink.class.getName())
+                .log(java.util.logging.Level.INFO, "{0} generated a {1} removal plan with {2} item(s)", new Object[] {
+                    user, format, count
+                });
+    }
+
+    /** Open findings at HIGH confidence by default, or exactly the one finding named by {@code id}. */
+    private java.util.List<Finding> selectForPlan(StaplerRequest2 req) throws IOException {
         var q = io.jenkins.plugins.hygieneauditor.rest.FindingQuery.fromRequest(req);
         String mc = req.getParameter("minConfidence");
         if (mc == null || mc.isBlank()) {
@@ -421,21 +464,7 @@ public class HygieneAuditorLink extends ManagementLink {
                     .map(java.util.List::of)
                     .orElse(java.util.List.of());
         }
-        String user = Jenkins.getAuthentication2().getName();
-        java.util.logging.Logger.getLogger(HygieneAuditorLink.class.getName())
-                .log(java.util.logging.Level.INFO, "{0} generated a {1} removal plan with {2} item(s)", new Object[] {
-                    user, format, selected.size()
-                });
-        if ("true".equals(req.getParameter("view"))) { // show it in the browser instead of saving a file
-            rsp.setContentType("text/plain;charset=UTF-8");
-            rsp.setHeader("X-Content-Type-Options", "nosniff");
-            rsp.setHeader("Cache-Control", "no-store");
-        } else {
-            download(rsp, format.contentType(), "hygiene-removal-plan." + format.extension());
-        }
-        rsp.getWriter()
-                .write(io.jenkins.plugins.hygieneauditor.export.RemovalPlan.generate(
-                        selected, format, user, Instant.now()));
+        return selected;
     }
 
     // --------------------------------------------------------------- actions

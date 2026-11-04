@@ -263,7 +263,7 @@ class UiPagesTest {
                 1, first.getByXPath("//tr[contains(@class,'ha-row-selected')]").size(), "exactly one highlighted row");
         assertEquals(
                 1,
-                first.getByXPath("//a[contains(@href,'removalPlan') and contains(@href,'id=" + evil.id() + "')]")
+                first.getByXPath("//a[contains(@href,'plan/?') and contains(@href,'id=" + evil.id() + "')]")
                         .size());
 
         HtmlPage other = wc.goTo(BASE + "?selected=" + stale.id());
@@ -274,12 +274,12 @@ class UiPagesTest {
         assertFalse(otherPanel.contains("onerror"), otherPanel);
         assertEquals(
                 1,
-                other.getByXPath("//a[contains(@href,'removalPlan') and contains(@href,'id=" + stale.id() + "')]")
+                other.getByXPath("//a[contains(@href,'plan/?') and contains(@href,'id=" + stale.id() + "')]")
                         .size(),
                 "plan for exactly this finding");
         assertEquals(
                 0,
-                other.getByXPath("//a[contains(@href,'removalPlan') and contains(@href,'id=" + evil.id() + "')]")
+                other.getByXPath("//a[contains(@href,'plan/?') and contains(@href,'id=" + evil.id() + "')]")
                         .size());
         assertEquals(
                 1, other.getByXPath("//tr[contains(@class,'ha-row-selected')]").size());

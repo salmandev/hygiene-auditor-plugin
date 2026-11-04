@@ -224,3 +224,12 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-form input[type=text], .ha-form input[type=number] { width: 100%; min-width: 12rem; }
 .ha-side .ha-panel > h3:first-child { margin-top: 0; }
 .ha-linkrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 20px 20px; font-size: 13px; }
+
+/* removal plan page */
+.ha-plan-help { padding: 16px 20px; margin-bottom: 16px; font-size: 14px; line-height: 1.5; }
+.ha-plan-help p { margin: 0 0 8px; }
+.ha-plan-help p:last-child { margin-bottom: 0; }
+.ha-plan { margin: 0; padding: 18px 20px; overflow: auto; max-height: 70vh; font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; background: transparent; color: var(--ha-text); border: 0; }
+.ha-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.ha-plan-card { overflow: hidden; }
+.ha-plan { box-sizing: border-box; width: 0; min-width: 100%; } /* long lines scroll inside the card; they must not widen the page */
