@@ -130,8 +130,24 @@ else) get a **Hygiene Auditor** tab on that folder, limited to its own findings.
 Findings can be **acknowledged**, or **ignored with a reason** and an optional snooze. A snooze that expires reopens
 the finding. A finding that is no longer observed becomes **resolved** and is removed after the retention period.
 
-> Screenshots: `docs/images/dashboard.png`, `finding-detail.png`, `folder-page.png`, `settings.png` — *placeholders,
-> to be added before the first release.*
+![Dashboard](docs/images/dashboard.png)
+
+| Finding detail | Folder page |
+|---|---|
+| ![Finding detail](docs/images/finding-detail.png) | ![Folder page](docs/images/folder-page.png) |
+
+| Dark theme | Phone width | Settings |
+|---|---|---|
+| ![Dark theme](docs/images/dashboard-dark.png) | ![Phone width](docs/images/dashboard-mobile.png) | ![Settings](docs/images/settings.png) |
+
+*The screenshots show the demo data below, including a seeded sample scan history for the trend chart. They are not from a real controller.*
+
+### Try it with Docker
+
+`demo/run-demo.sh [port]` builds the plugin (set `JAVA_HOME` to a JDK 21), starts a throw-away Jenkins in Docker with
+sample folders, credentials, jobs, agents and shared libraries, runs a scan and prints the URL. Log in as `admin` /
+`admin` (everything) or `lead` / `lead` (only the `legacy` folder). Stop it with `docker rm -f hygiene-auditor-demo`.
+The demo accounts and the script console use are for this disposable container only.
 
 ### Permissions
 

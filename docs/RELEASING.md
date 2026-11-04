@@ -13,8 +13,7 @@ Coordinates used here: `groupId` **io.jenkins.plugins**, `artifactId` **hygiene-
 
 - [ ] Put the code in a **public GitHub repository** (it is not under git yet). Suggested name: `hygiene-auditor-plugin`.
 - [ ] Read the preparation and style-guide pages linked from the hosting guide (naming conventions).
-- [ ] Replace the placeholder copyright line in `LICENSE` and add real screenshots under `docs/images/`
-      (`dashboard.png`, `finding-detail.png`, `folder-page.png`, `settings.png`).
+- [ ] Replace the placeholder copyright line in `LICENSE`. Screenshots are in `docs/images/` (demo data); refresh them if the UI changes.
 - [ ] Decide the security contact/process described in `SECURITY.md` and confirm the link is still correct.
 - [ ] `mvn clean verify` is green on a JDK 21 and the `Jenkinsfile` builds on ci.jenkins.io-style agents.
 - [ ] Review the README **Status** table: it must list exactly what ships.
@@ -125,8 +124,7 @@ These are honest gaps, not formalities.
 2. **Unverified on a real fleet:** the fingerprint-tracking switch name
    (`-DCredentialsProvider.fingerprintEnabled`, read from the plugin's bytecode), and the CLI credential store ids in the
    shell removal plan. Test both against your real Credentials plugin version.
-3. **Visual review.** The pages were verified structurally and over HTTP, but not looked at in a browser, in dark mode
-   or on a phone-sized screen.
+3. **Visual review.** The pages were checked in Chrome (light, dark, 390px wide) against the Docker demo only; check them on your Jenkins theme.
 4. **The settings page** requires Jenkins' `MANAGE` permission, not the plugin's `Configure` permission (a
    `GlobalConfiguration` limitation).
 5. **Authorize Project:** the `hygieneScan` step checks `Scan` for the build identity; it has not been tested with a
