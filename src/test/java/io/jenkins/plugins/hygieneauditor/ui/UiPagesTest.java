@@ -160,6 +160,29 @@ class UiPagesTest {
     }
 
     @Test
+    void theSidebarLinksTheSectionsAndOnlyOffersSettingsToThoseWhoMayConfigure() throws Exception {
+        HtmlPage admin = as("admin").goTo(BASE);
+        assertEquals(
+                "Overview",
+                admin.<org.htmlunit.html.HtmlElement>getFirstByXPath("//nav[@class='ha-nav']//a[@aria-current='page']")
+                        .getTextContent()
+                        .trim());
+        assertEquals(
+                1,
+                admin.getByXPath("//nav[@class='ha-nav']//a[@href='#findings']").size());
+        assertNotNull(admin.getElementById("findings"), "the Findings link has a target");
+        assertEquals(
+                1,
+                admin.getByXPath("//nav[@class='ha-nav']//a[contains(@href,'manage/configure')]")
+                        .size());
+        HtmlPage viewer = as("viewer").goTo(BASE);
+        assertTrue(
+                viewer.getByXPath("//nav[@class='ha-nav']//a[contains(@href,'manage/configure')]")
+                        .isEmpty(),
+                "no settings link without permission");
+    }
+
+    @Test
     void viewerSeesFindingsButNoScanOrDecisionControls() throws Exception {
         JenkinsRule.WebClient wc = as("viewer");
         HtmlPage page = wc.goTo(BASE);

@@ -8,6 +8,15 @@
       <j:set var="ring" value="${it.ringFor(summary)}"/>
       <j:set var="panel" value="${it.panel}"/>
       <div class="ha-page">
+       <div class="ha-layout">
+        <nav class="ha-nav" aria-label="${%Hygiene Auditor}">
+          <a href="${rootURL}/manage/hygiene-auditor/" aria-current="page">${%Overview}</a>
+          <a href="#findings">${%Findings}</a>
+          <j:if test="${it.canConfigure}">
+            <a href="${rootURL}/manage/configure">${%Settings and ignore rules}</a>
+          </j:if>
+        </nav>
+        <div class="ha-content">
 
         <header class="ha-top">
           <div>
@@ -96,7 +105,7 @@
         </section>
 
         <div class="ha-main">
-          <section class="ha-card ha-findings">
+          <section class="ha-card ha-findings" id="findings">
             <st:include it="${panel}" page="table.jelly"/>
           </section>
           <aside class="ha-side">
@@ -122,6 +131,8 @@
             </section>
           </aside>
         </div>
+        </div>
+       </div>
       </div>
     </l:main-panel>
   </l:layout>

@@ -1,24 +1,24 @@
 /*
- * Hygiene Auditor. Visual language taken from the design sample: cool grey page, white 16px cards, one deep-teal
- * accent, Inter-style type, monospace finding names and tinted pills. Dark palette below follows Jenkins' own theme
+ * Hygiene Auditor. Visual language taken from the "Jenkins theme" design sample: pale grey page, white 12px cards, Jenkins
+ * blue accent, the system font, a task sidebar, monospace finding names and tinted pills. Dark palette below follows Jenkins' own theme
  * switch (data-theme="dark", or "dark-system" while the OS is dark). Colour never carries meaning alone: every pill,
  * dot and bar also has text.
  */
 .ha-page {
-  --ha-bg: #F4F6F8; --ha-card: #FFFFFF; --ha-border: #E4E7EC; --ha-border-strong: #D0D5DD; --ha-divider: #EEF0F3;
-  --ha-text: #14181F; --ha-text-2: #344054; --ha-muted: #596273;
-  --ha-accent: #0F766E; --ha-accent-contrast: #FFFFFF; --ha-accent-line: #0F766E; --ha-selected: #EEF7F6; --ha-track: #E4E7EC;
-  --ha-high-bg: #FEF3F2; --ha-high-fg: #B42318; --ha-med-bg: #FFFAEB; --ha-med-fg: #B54708; --ha-low-bg: #F2F4F7; --ha-low-fg: #475467;
+  --ha-bg: #F7F8FA; --ha-card: #FFFFFF; --ha-border: #DFE3E8; --ha-border-strong: #CBD2D9; --ha-divider: #EDF0F3;
+  --ha-text: #1F2933; --ha-text-2: #3F4A59; --ha-muted: #4B5563;
+  --ha-accent: #0B6AA2; --ha-accent-contrast: #FFFFFF; --ha-accent-line: #0B5A88; --ha-selected: #E3EFF7; --ha-track: #DFE3E8;
+  --ha-high-bg: #FDECEA; --ha-high-fg: #B42318; --ha-med-bg: #FFF4E0; --ha-med-fg: #9A4A06; --ha-low-bg: #EEF1F4; --ha-low-fg: #3F4A59;
   --ha-ok: #12B76A; --ha-warn: #F79009; --ha-danger: #F04438; --ha-sev-low: #98A2B3; --ha-pos-fg: #067647;
-  --ha-radius: 16px; --ha-gap: 16px;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --ha-radius: 12px; --ha-gap: 16px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--ha-text);
   max-width: 1400px; margin: 0 auto; padding: 8px 0 32px;
 }
 html[data-theme="dark"] .ha-page {
   --ha-bg: #0D1117; --ha-card: #161B22; --ha-border: #2A313C; --ha-border-strong: #3A4350; --ha-divider: #232A33;
   --ha-text: #E6EDF3; --ha-text-2: #C5CED8; --ha-muted: #8B97A6;
-  --ha-accent: #0F766E; --ha-accent-line: #2DD4BF; --ha-selected: rgba(45, 212, 191, .10); --ha-track: #2A313C;
+  --ha-accent: #0B6AA2; --ha-accent-line: #62B4E8; --ha-selected: rgba(98, 180, 232, .14); --ha-track: #2A313C;
   --ha-high-bg: rgba(248, 81, 73, .16); --ha-high-fg: #FFA198; --ha-med-bg: rgba(210, 153, 34, .16); --ha-med-fg: #E3B341;
   --ha-low-bg: rgba(139, 151, 166, .16); --ha-low-fg: #B6C0CC;
   --ha-ok: #32D583; --ha-warn: #FDB022; --ha-danger: #F97066; --ha-sev-low: #8B97A6; --ha-pos-fg: #6CE9A6;
@@ -27,14 +27,14 @@ html[data-theme="dark"] .ha-page {
   html[data-theme="dark-system"] .ha-page {
     --ha-bg: #0D1117; --ha-card: #161B22; --ha-border: #2A313C; --ha-border-strong: #3A4350; --ha-divider: #232A33;
     --ha-text: #E6EDF3; --ha-text-2: #C5CED8; --ha-muted: #8B97A6;
-    --ha-accent: #0F766E; --ha-accent-line: #2DD4BF; --ha-selected: rgba(45, 212, 191, .10); --ha-track: #2A313C;
+    --ha-accent: #0B6AA2; --ha-accent-line: #62B4E8; --ha-selected: rgba(98, 180, 232, .14); --ha-track: #2A313C;
     --ha-high-bg: rgba(248, 81, 73, .16); --ha-high-fg: #FFA198; --ha-med-bg: rgba(210, 153, 34, .16); --ha-med-fg: #E3B341;
     --ha-low-bg: rgba(139, 151, 166, .16); --ha-low-fg: #B6C0CC;
     --ha-ok: #32D583; --ha-warn: #FDB022; --ha-danger: #F97066; --ha-sev-low: #8B97A6; --ha-pos-fg: #6CE9A6;
   }
 }
 /* page background behind the cards (the variables live on .ha-page, so the two palettes are repeated for <body>) */
-body:has(.ha-page) { background: #F4F6F8; }
+body:has(.ha-page) { background: #F7F8FA; }
 html[data-theme="dark"] body:has(.ha-page) { background: #0D1117; }
 @media (prefers-color-scheme: dark) { html[data-theme="dark-system"] body:has(.ha-page) { background: #0D1117; } }
 
@@ -233,3 +233,25 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .ha-plan-card { overflow: hidden; }
 .ha-plan { box-sizing: border-box; width: 0; min-width: 100%; } /* long lines scroll inside the card; they must not widen the page */
+
+/* page layout: task sidebar + content, like other Jenkins pages */
+.ha-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 24px; align-items: start; }
+.ha-content { min-width: 0; container: ha / inline-size; }
+.ha-nav { display: flex; flex-direction: column; gap: 2px; position: sticky; top: 16px; margin-top: 8px; }
+.ha-page .ha-nav a { display: block; padding: 9px 12px; border-radius: 8px; color: var(--ha-text); text-decoration: none; font-size: 14px; font-weight: 500; }
+.ha-page .ha-nav a:hover { background: var(--ha-divider); }
+.ha-page .ha-nav a[aria-current="page"] { background: var(--ha-selected); color: var(--ha-accent-line); font-weight: 600; }
+.ha-page .ha-nav a:focus-visible { outline: 3px solid color-mix(in srgb, var(--ha-accent-line) 45%, transparent); outline-offset: 1px; }
+@media (max-width: 900px) {
+  .ha-layout { grid-template-columns: 1fr; gap: 8px; }
+  .ha-nav { flex-direction: row; flex-wrap: wrap; position: static; }
+}
+
+/* the sidebar takes width, so the content reflows by its own width, not the window's */
+@container ha (max-width: 1080px) {
+  .ha-main, .ha-detail-grid { grid-template-columns: 1fr; }
+  .ha-cards-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .ha-ring-card { grid-column: 1 / -1; }
+}
+@container ha (max-width: 760px) { .ha-cards-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container ha (max-width: 520px) { .ha-cards-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
