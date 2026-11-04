@@ -1,0 +1,32 @@
+/* Uses Jenkins theme variables, so it follows light/dark/high-contrast themes. Never relies on colour alone. */
+.ha-toolbar { display: flex; gap: var(--section-padding, 1rem); flex-wrap: wrap; align-items: center; margin: 1rem 0; }
+.ha-status { margin: 0 0 1rem; }
+.ha-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; margin: 1rem 0 1.5rem; }
+.ha-card { border: 1px solid var(--card-border-color, currentColor); border-radius: 0.5rem; padding: 0.75rem 1rem; background: var(--card-background, transparent); }
+.ha-card h3 { margin: 0 0 0.5rem; font-size: 1rem; }
+.ha-card dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 1rem; }
+.ha-card dt { margin: 0; }
+.ha-card dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+.ha-filters { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: end; margin: 0.5rem 0 1rem; }
+.ha-filters label { display: block; font-size: 0.85rem; color: var(--text-color-secondary, inherit); margin-bottom: 0.15rem; }
+.ha-table caption { text-align: left; padding: 0.5rem 0; font-weight: 600; }
+.ha-badge { display: inline-block; padding: 0.05rem 0.5rem; border-radius: 1rem; border: 1px solid currentColor; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.ha-sev-high { color: var(--red, #c62828); }
+.ha-sev-medium { color: var(--orange, #e65100); }
+.ha-sev-low { color: var(--yellow, #8d6e00); }
+.ha-sev-info { color: var(--text-color-secondary, inherit); }
+.ha-conf-high { color: var(--green, #2e7d32); }
+.ha-conf-medium { color: var(--blue, #1565c0); }
+.ha-conf-low { color: var(--text-color-secondary, inherit); }
+.ha-empty { color: var(--text-color-secondary, inherit); font-style: italic; }
+.ha-pager { display: flex; gap: 1rem; margin: 0.75rem 0; align-items: center; }
+.ha-trend { width: 100%; max-width: 40rem; height: auto; color: var(--text-color, currentColor); }
+.ha-trend .ha-axis { stroke: currentColor; stroke-opacity: 0.4; stroke-width: 1; }
+.ha-trend .ha-label { fill: currentColor; font-size: 11px; }
+.ha-trend .ha-line-total { stroke: var(--link-color, currentColor); stroke-width: 2; }
+.ha-trend .ha-line-high { stroke: var(--red, currentColor); stroke-width: 2; stroke-dasharray: 2 4; }
+.ha-detail dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1.5rem; }
+.ha-detail dt { font-weight: 600; }
+.ha-detail dd { margin: 0; }
+.ha-statusform { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: end; margin: 1rem 0; }
+.ha-statusform label { display: block; font-size: 0.85rem; margin-bottom: 0.15rem; }

@@ -1,0 +1,20 @@
+unclassified:
+  hygieneAuditor:
+    credentialStaleUseDays: 120
+    disabledCollectors:
+    - "agents"
+    disabledJobDays: 90
+    ignoreRules:
+    - category: "CREDENTIALS"
+      reason: "Managed by the platform team"
+      subject: "^prod-.*"
+    - folder: "sandbox"
+      reason: "Throwaway area"
+    - folder: "archive"
+      type: "job.*"
+    maxFindings: 20000
+    neverBuiltGraceDays: 10
+    offlineAgentDays: 14
+    resolvedRetentionDays: 7
+    scanCron: "H 3 * * 0"
+    staleJobDays: 200

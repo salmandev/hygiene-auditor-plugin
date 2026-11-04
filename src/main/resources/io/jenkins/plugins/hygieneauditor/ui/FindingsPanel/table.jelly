@@ -1,0 +1,89 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler">
+  <form method="get" action="." class="ha-filters" aria-label="${%Filter findings}">
+    <div>
+      <label for="ha-f-category">${%Category}</label>
+      <select id="ha-f-category" name="category" class="jenkins-select__input">
+        <j:forEach var="o" items="${it.categoryOptions.entrySet()}">
+          <option value="${o.key}" selected="${o.key == it.selectedCategory ? 'true' : null}">
+            <j:choose><j:when test="${empty(o.key)}">${%Any}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
+          </option>
+        </j:forEach>
+      </select>
+    </div>
+    <div>
+      <label for="ha-f-status">${%Status}</label>
+      <select id="ha-f-status" name="status" class="jenkins-select__input">
+        <j:forEach var="o" items="${it.statusOptions.entrySet()}">
+          <option value="${o.key}" selected="${o.key == it.selectedStatus ? 'true' : null}">
+            <j:choose><j:when test="${o.key == 'all'}">${%All}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
+          </option>
+        </j:forEach>
+      </select>
+    </div>
+    <div>
+      <label for="ha-f-conf">${%Minimum confidence}</label>
+      <select id="ha-f-conf" name="minConfidence" class="jenkins-select__input">
+        <j:forEach var="o" items="${it.confidenceOptions.entrySet()}">
+          <option value="${o.key}" selected="${o.key == it.selectedConfidence ? 'true' : null}">
+            <j:choose><j:when test="${empty(o.key)}">${%Any}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
+          </option>
+        </j:forEach>
+      </select>
+    </div>
+    <div>
+      <label for="ha-f-sev">${%Minimum severity}</label>
+      <select id="ha-f-sev" name="minSeverity" class="jenkins-select__input">
+        <j:forEach var="o" items="${it.severityOptions.entrySet()}">
+          <option value="${o.key}" selected="${o.key == it.selectedSeverity ? 'true' : null}">
+            <j:choose><j:when test="${empty(o.key)}">${%Any}</j:when><j:otherwise>${o.value}</j:otherwise></j:choose>
+          </option>
+        </j:forEach>
+      </select>
+    </div>
+    <j:if test="${it.showFolderFilter}">
+      <div>
+        <label for="ha-f-folder">${%Folder}</label>
+        <input id="ha-f-folder" name="folder" type="text" class="jenkins-input" value="${it.selectedFolder}"/>
+      </div>
+    </j:if>
+    <div><button type="submit" class="jenkins-button">${%Filter}</button></div>
+  </form>
+
+  <j:choose>
+    <j:when test="${empty(it.rows)}">
+      <p class="ha-empty">${%No findings match the current filter.}</p>
+    </j:when>
+    <j:otherwise>
+      <table class="jenkins-table ha-table sortable">
+        <caption>${%Findings}: ${it.from}–${it.to} / ${it.total}</caption>
+        <thead>
+          <tr>
+            <th scope="col">${%Subject}</th>
+            <th scope="col">${%Type}</th>
+            <th scope="col">${%Severity}</th>
+            <th scope="col">${%Confidence}</th>
+            <th scope="col">${%Status}</th>
+            <th scope="col">${%Last seen}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <j:forEach var="r" items="${it.rows}">
+            <tr>
+              <td><a href="finding/${r.id}/" class="jenkins-table__link">${r.subjectDisplayName}</a></td>
+              <td>${r.type}</td>
+              <td data-sort-value="${r.severity}"><span class="ha-badge ha-sev-${r.severity.toLowerCase()}">${r.severityLabel}</span></td>
+              <td data-sort-value="${r.confidence}"><span class="ha-badge ha-conf-${r.confidence.toLowerCase()}">${r.confidenceLabel}</span></td>
+              <td>${r.statusLabel}</td>
+              <td><time datetime="${r.lastSeen}">${r.lastSeen}</time></td>
+            </tr>
+          </j:forEach>
+        </tbody>
+      </table>
+      <nav class="ha-pager" aria-label="${%Pages}">
+        <j:if test="${it.hasPrevious}"><a href="${it.previousUrl}">${%Previous}</a></j:if>
+        <j:if test="${it.hasNext}"><a href="${it.nextUrl}">${%Next}</a></j:if>
+      </nav>
+    </j:otherwise>
+  </j:choose>
+</j:jelly>
