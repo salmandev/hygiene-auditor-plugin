@@ -1,0 +1,35 @@
+# Hygiene Auditor: complete JCasC example. Every key is optional; omit a key to keep its default.
+# This file is loaded by a test (DocumentedExampleTest), so it cannot drift from the code.
+unclassified:
+  hygieneAuditor:
+    # --- when to scan (Jenkins cron syntax, one expression per line). Empty = manual and pipeline scans only.
+    scanCron: "H 3 * * 0"          # weekly, Sunday, hashed minute in the 3am hour
+    disabledCollectors:            # collector ids that must not run: jobs, agents, credentials, libraries
+    - "agents"
+
+    # --- thresholds, in days
+    staleJobDays: 365              # last build older than this => job.stale
+    neverBuiltGraceDays: 30        # never-built jobs younger than this are not reported
+    disabledJobDays: 180           # disabled and unchanged for this long => job.disabled
+    offlineAgentDays: 30           # permanent agent offline for this long => agent.offline
+    credentialStaleUseDays: 180    # a recorded last use older than this counts as evidence of non-use
+
+    # --- how much history to keep
+    maxFindings: 50000
+    resolvedRetentionDays: 30
+
+    # --- exemptions: a finding matching EVERY field of a rule is never recorded
+    ignoreRules:
+    - category: "CREDENTIALS"      # JOBS, AGENTS, CREDENTIALS, SHARED_LIBRARIES, PLUGINS
+      subject: "^prod-.*"          # regex; for credentials it is matched against the credential id
+      reason: "Managed by the platform team"
+    - folder: "sandbox"            # this folder and everything below it
+      reason: "Throwaway area"
+    - type: "job.*"                # finding type, * wildcard
+      folder: "archive"
+
+    # --- notifications about NEW findings (first seen, or back after being resolved)
+    notifyMinSeverity: HIGH        # INFO, LOW, MEDIUM, HIGH
+    webhookUrl: "https://hooks.example.com/hygiene"
+    webhookSecret: "${HYGIENE_WEBHOOK_SECRET}"   # signs the body: X-Hygiene-Signature: sha256=<hmac>
+    emailRecipients: "ops@example.com platform@example.com"   # needs the Mailer plugin

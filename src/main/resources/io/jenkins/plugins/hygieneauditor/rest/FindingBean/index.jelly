@@ -1,0 +1,66 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">
+  <l:layout title="${it.subjectDisplayName}" type="one-column">
+    <st:adjunct includes="io.jenkins.plugins.hygieneauditor.style"/>
+    <l:main-panel>
+      <l:app-bar title="${it.subjectDisplayName}">
+        <a href="../.." class="jenkins-button">${%Back to findings}</a>
+      </l:app-bar>
+
+      <div class="ha-detail">
+        <dl>
+          <dt>${%Type}</dt><dd>${it.type}</dd>
+          <dt>${%Category}</dt><dd>${it.categoryLabel}</dd>
+          <dt>${%Subject}</dt><dd>${it.subject}</dd>
+          <dt>${%Severity}</dt><dd><span class="ha-badge ha-sev-${it.severity.toLowerCase()}">${it.severityLabel}</span></dd>
+          <dt>${%Confidence}</dt><dd><span class="ha-badge ha-conf-${it.confidence.toLowerCase()}">${it.confidenceLabel}</span></dd>
+          <dt>${%Status}</dt>
+          <dd>${it.statusLabel}<j:if test="${it.statusReason != null}"> — ${it.statusReason}</j:if><j:if test="${it.snoozeUntil != null}"> (${%until} ${it.snoozeUntil})</j:if></dd>
+          <dt>${%First seen}</dt><dd><time datetime="${it.firstSeen}">${it.firstSeen}</time></dd>
+          <dt>${%Last seen}</dt><dd><time datetime="${it.lastSeen}">${it.lastSeen}</time></dd>
+          <dt>${%Suggested action}</dt><dd>${it.suggestedAction}</dd>
+        </dl>
+      </div>
+
+      <h2>${%Evidence}</h2>
+      <p>${%Positive weights support the conclusion that the subject is unused; zero is informational. Confidence is computed from these weights and lowered by every caveat listed.}</p>
+      <table class="jenkins-table ha-table">
+        <caption>${%Evidence behind this finding}</caption>
+        <thead><tr><th scope="col">${%Source}</th><th scope="col">${%Observation}</th><th scope="col">${%Weight}</th></tr></thead>
+        <tbody>
+          <j:forEach var="e" items="${it.evidence}">
+            <tr><td>${e.source}</td><td>${e.text}</td><td>${e.weight}</td></tr>
+          </j:forEach>
+        </tbody>
+      </table>
+
+      <j:if test="${it.statusAction != null}">
+        <h2>${%Decision}</h2>
+        <f:form method="post" action="${it.statusAction}" name="status">
+          <input type="hidden" name="id" value="${it.id}"/>
+          <input type="hidden" name="fromUi" value="true"/>
+          <div class="ha-statusform">
+            <div>
+              <label for="ha-s-status">${%Set status}</label>
+              <select id="ha-s-status" name="status" class="jenkins-select__input">
+                <option value="OPEN">${%Open}</option>
+                <option value="ACKNOWLEDGED">${%Acknowledged}</option>
+                <option value="IGNORED">${%Ignored}</option>
+              </select>
+            </div>
+            <div>
+              <label for="ha-s-reason">${%Reason}</label>
+              <input id="ha-s-reason" name="reason" type="text" class="jenkins-input" maxlength="500" aria-describedby="ha-s-reason-hint"/>
+              <small id="ha-s-reason-hint">${%Required when ignoring.}</small>
+            </div>
+            <div>
+              <label for="ha-s-snooze">${%Snooze days}</label>
+              <input id="ha-s-snooze" name="snoozeDays" type="number" min="1" class="jenkins-input"/>
+            </div>
+            <div><button type="submit" class="jenkins-button jenkins-button--primary">${%Update status}</button></div>
+          </div>
+        </f:form>
+      </j:if>
+    </l:main-panel>
+  </l:layout>
+</j:jelly>

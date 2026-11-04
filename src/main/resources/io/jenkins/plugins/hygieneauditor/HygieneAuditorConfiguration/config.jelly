@@ -1,0 +1,47 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:section title="${%Hygiene Auditor}">
+    <f:entry title="${%Scan schedule}" field="scanCron">
+      <f:textarea checkMethod="post"/>
+    </f:entry>
+    <f:entry title="${%Collectors}" description="${%Untick a collector to stop it from running.}">
+      <j:forEach var="c" items="${descriptor.collectors}">
+        <div>
+          <f:checkbox name="${descriptor.formKey(c.id)}" title="${c.displayName}" checked="${descriptor.isCollectorEnabled(c.id)}"/>
+        </div>
+      </j:forEach>
+    </f:entry>
+    <f:advanced title="${%Thresholds}">
+      <f:entry title="${%Stale job threshold in days}" field="staleJobDays"><f:number min="1" default="365"/></f:entry>
+      <f:entry title="${%Never-built grace period in days}" field="neverBuiltGraceDays"><f:number min="0" default="30"/></f:entry>
+      <f:entry title="${%Disabled job threshold in days}" field="disabledJobDays"><f:number min="1" default="180"/></f:entry>
+      <f:entry title="${%Offline agent threshold in days}" field="offlineAgentDays"><f:number min="1" default="30"/></f:entry>
+      <f:entry title="${%Credential last-use threshold in days}" field="credentialStaleUseDays"><f:number min="1" default="180"/></f:entry>
+    </f:advanced>
+    <f:advanced title="${%Retention}">
+      <f:entry title="${%Maximum stored findings}" field="maxFindings"><f:number min="1" default="50000"/></f:entry>
+      <f:entry title="${%Keep resolved findings for days}" field="resolvedRetentionDays"><f:number min="0" default="30"/></f:entry>
+    </f:advanced>
+    <f:advanced title="${%Notifications}">
+      <f:entry title="${%Notify about new findings of at least}" field="notifyMinSeverity"><f:select/></f:entry>
+      <f:entry title="${%Webhook URL}" field="webhookUrl"><f:textbox checkMethod="post"/></f:entry>
+      <f:entry title="${%Webhook signing secret}" field="webhookSecret"><f:password/></f:entry>
+      <f:entry title="${%Email recipients}" field="emailRecipients"><f:textbox/></f:entry>
+    </f:advanced>
+    <f:advanced title="${%Ignore rules}">
+      <f:entry title="${%Exemptions}"
+               description="${%A finding matching every filled-in field of a rule is never recorded. Subject is a regular expression, for example ^prod-.* for credential ids.}">
+        <f:repeatable field="ignoreRules" add="${%Add rule}" minimum="0">
+          <table width="100%">
+            <f:entry title="${%Category}" field="category"><f:textbox/></f:entry>
+            <f:entry title="${%Finding type}" field="type"><f:textbox/></f:entry>
+            <f:entry title="${%Subject regex}" field="subject"><f:textbox/></f:entry>
+            <f:entry title="${%Folder}" field="folder"><f:textbox/></f:entry>
+            <f:entry title="${%Reason}" field="reason"><f:textbox/></f:entry>
+            <f:entry><div align="right"><f:repeatableDeleteButton/></div></f:entry>
+          </table>
+        </f:repeatable>
+      </f:entry>
+    </f:advanced>
+  </f:section>
+</j:jelly>
