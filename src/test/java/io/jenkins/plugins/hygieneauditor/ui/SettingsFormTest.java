@@ -61,6 +61,27 @@ class SettingsFormTest {
     }
 
     @Test
+    void theSeverityChoicesAreOnlyOfferedToThoseWhoMayManageJenkins(JenkinsRule j) throws Exception {
+        j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
+        j.jenkins.setAuthorizationStrategy(new org.jvnet.hudson.test.MockAuthorizationStrategy()
+                .grant(jenkins.model.Jenkins.ADMINISTER)
+                .everywhere()
+                .to("admin")
+                .grant(jenkins.model.Jenkins.READ)
+                .everywhere()
+                .to("reader"));
+        HygieneAuditorConfiguration c = HygieneAuditorConfiguration.get();
+        try (var ignored =
+                hudson.security.ACL.as2(hudson.model.User.getById("admin", true).impersonate2())) {
+            assertFalse(c.doFillNotifyMinSeverityItems().isEmpty());
+        }
+        try (var ignored = hudson.security.ACL.as2(
+                hudson.model.User.getById("reader", true).impersonate2())) {
+            assertTrue(c.doFillNotifyMinSeverityItems().isEmpty());
+        }
+    }
+
+    @Test
     void editingTheFormAppliesTheChanges(JenkinsRule j) throws Exception {
         HtmlPage page = j.createWebClient().goTo("manage/configure");
         HtmlForm form = page.getFormByName("config");

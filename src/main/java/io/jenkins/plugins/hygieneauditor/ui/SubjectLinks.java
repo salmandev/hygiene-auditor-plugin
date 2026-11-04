@@ -18,7 +18,7 @@ import jenkins.model.Jenkins;
 public final class SubjectLinks {
 
     /** @param path relative to the Jenkins root URL, no leading slash */
-    public record Link(@NonNull String path, @NonNull String labelKey) {}
+    public record Link(@NonNull String path, @NonNull String kind) {}
 
     private SubjectLinks() {}
 

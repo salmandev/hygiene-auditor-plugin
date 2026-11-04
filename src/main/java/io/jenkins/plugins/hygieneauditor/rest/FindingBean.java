@@ -89,7 +89,7 @@ public class FindingBean {
 
     public String getSubjectLinkLabel() {
         var l = io.jenkins.plugins.hygieneauditor.ui.SubjectLinks.of(f.subject());
-        return l == null ? null : io.jenkins.plugins.hygieneauditor.ui.Labels.openIn(l.labelKey());
+        return l == null ? null : io.jenkins.plugins.hygieneauditor.ui.Labels.openIn(l.kind());
     }
 
     public String getTypeLabel() {

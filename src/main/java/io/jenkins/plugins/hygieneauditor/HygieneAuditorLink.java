@@ -369,6 +369,7 @@ public class HygieneAuditorLink extends ManagementLink {
     }
 
     /** {@code exportJson?category=&status=&...}: every matching finding, in the on-disk schema. */
+    // lgtm[jenkins/csrf] read-only download, gated by the View permission; it changes nothing, so no POST is needed
     public void doExportJson(StaplerRequest2 req, StaplerResponse2 rsp) throws IOException {
         Jenkins.get().checkPermission(HygieneAuditorPermissions.VIEW);
         var q = io.jenkins.plugins.hygieneauditor.rest.FindingQuery.fromRequest(req);
@@ -377,6 +378,7 @@ public class HygieneAuditorLink extends ManagementLink {
     }
 
     /** {@code exportCsv?...}: same selection as CSV, safe to open in a spreadsheet. */
+    // lgtm[jenkins/csrf] read-only download, gated by the View permission; it changes nothing, so no POST is needed
     public void doExportCsv(StaplerRequest2 req, StaplerResponse2 rsp) throws IOException {
         Jenkins.get().checkPermission(HygieneAuditorPermissions.VIEW);
         var q = io.jenkins.plugins.hygieneauditor.rest.FindingQuery.fromRequest(req);
@@ -389,6 +391,7 @@ public class HygieneAuditorLink extends ManagementLink {
      * administrator to review and run <em>by hand</em>. Nothing here changes anything. Only OPEN findings are
      * included, and the confidence floor defaults to HIGH.
      */
+    // lgtm[jenkins/csrf] read-only download, gated by the View permission; it changes nothing, so no POST is needed
     public void doRemovalPlan(StaplerRequest2 req, StaplerResponse2 rsp) throws IOException {
         Jenkins.get().checkPermission(HygieneAuditorPermissions.VIEW);
         var format = planFormat(req);

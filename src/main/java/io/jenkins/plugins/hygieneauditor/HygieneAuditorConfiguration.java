@@ -270,8 +270,12 @@ public final class HygieneAuditorConfiguration extends GlobalConfiguration {
         }
     }
 
+    @POST
     public ListBoxModel doFillNotifyMinSeverityItems() {
         ListBoxModel m = new ListBoxModel();
+        if (!Jenkins.get().hasPermission(Jenkins.MANAGE)) {
+            return m;
+        }
         for (Severity s : Severity.values()) {
             m.add(Labels.severity(s), s.name());
         }
