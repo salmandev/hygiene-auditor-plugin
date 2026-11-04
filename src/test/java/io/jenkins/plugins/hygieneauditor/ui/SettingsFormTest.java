@@ -48,6 +48,19 @@ class SettingsFormTest {
     }
 
     @Test
+    void savedExemptionsAreListedOnThePage(JenkinsRule j) throws Exception {
+        IgnoreRule r = new IgnoreRule("CREDENTIALS");
+        r.setSubject("^prod-.*");
+        HygieneAuditorConfiguration.get().setIgnoreRules(List.of(r));
+        HtmlPage page = j.createWebClient().goTo("manage/configure");
+        assertTrue(
+                page.getByXPath("//input[@name='_.subject' and @value='^prod-.*']")
+                                .size()
+                        == 1,
+                "the saved rule is shown in the form");
+    }
+
+    @Test
     void editingTheFormAppliesTheChanges(JenkinsRule j) throws Exception {
         HtmlPage page = j.createWebClient().goTo("manage/configure");
         HtmlForm form = page.getFormByName("config");

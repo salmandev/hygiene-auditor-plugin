@@ -2,6 +2,9 @@ package io.jenkins.plugins.hygieneauditor.policy;
 
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Extension;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.Descriptor;
 import io.jenkins.plugins.hygieneauditor.model.Category;
 import io.jenkins.plugins.hygieneauditor.model.Finding;
 import java.util.Locale;
@@ -24,7 +27,7 @@ import org.kohsuke.stapler.DataBoundSetter;
  *   <li>{@code reason}: documentation only
  * </ul>
  */
-public class IgnoreRule {
+public class IgnoreRule extends AbstractDescribableImpl<IgnoreRule> {
     private static final int MAX_NAME = 1024;
     private static final long MATCH_TIMEOUT_MILLIS = 50;
     private static final java.util.logging.Logger LOGGER =
@@ -170,5 +173,15 @@ public class IgnoreRule {
 
     private static String blankToNull(String s) {
         return s == null || s.isBlank() ? null : s.trim();
+    }
+
+    /** Needed so the settings form can list and edit rules; it has no behaviour of its own. */
+    @Extension
+    public static class DescriptorImpl extends Descriptor<IgnoreRule> {
+        @NonNull
+        @Override
+        public String getDisplayName() {
+            return "Hygiene Auditor exemption";
+        }
     }
 }
