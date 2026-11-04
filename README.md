@@ -24,7 +24,7 @@ This is an early release. What exists today:
 | Removal-plan generator (Groovy, shell, checklist) | ✅ |
 | Notifications: webhook and email (Mailer) | ✅ |
 | Shared libraries: unreferenced libraries, unused `vars/` variables and `src` classes | ✅ (see limits) |
-| Plugin collector (orphaned data, plugins without observable use) | ⏳ not yet |
+| Plugins: orphaned data (Jenkins' own Old Data report) and plugins needing review | ✅ (see limits) |
 | Never-used agents, unrequested labels, unprovisioned cloud templates | ⏳ not yet |
 | Orphaned multibranch branches, build/workspace footprint | ⏳ not yet |
 | Prometheus metrics (optional Metrics plugin) | ⏳ not yet |
@@ -58,6 +58,8 @@ Each piece of evidence has a weight. The weights are summed; then each *caveat* 
 | `job.stale` | last build older than the threshold **50**; older than twice the threshold **+20** | build records were discarded |
 | `job.disabled` | disabled and unchanged for the threshold **50**; never built or last build older **+20** | — |
 | `agent.offline` | offline for the threshold **60**; for three times the threshold **+15** | on-demand / scheduled retention strategy (being offline is normal) |
+| `plugin.orphaned_data` | Jenkins reports stored data it cannot read **60** | none (also caused by plugin upgrades; only data loaded since the last restart is listed) |
+| `plugin.needs_review` | no configuration stamp, no persisted settings file, no pipeline step **30** | always LOW by construction; INFO severity |
 | `library.unreferenced` | no run of any in-scope pipeline job loaded it **35**; no script names it **25**; ≥ 20 jobs inspected **+15** | dynamic `library(...)` requests; in-scope jobs that never ran; unreadable items |
 | `library.unused_variable` | no inspected script and no other library file mentions it **50**; ≥ 10 jobs inspected **+15** | dynamic invocation (`evaluate`, computed method names); unreadable items |
 | `library.unused_class` | as above **45** (+15) | dynamic invocation; a wildcard import of its package; unreadable items |
@@ -104,6 +106,19 @@ loaded, a `vars/` variable or `src` class that no inspected script and no other 
 * Matching is by word: a variable with a very common name is more likely to look used than it is. Names that appear only
   as an `@Library(...)` argument or in a `package`/qualified class name do not count as uses.
 * Library findings are visible to administrators only. Details: [docs/LIBRARIES-FEASIBILITY.md](docs/LIBRARIES-FEASIBILITY.md).
+
+### Plugins: what is, and is not, knowable
+
+* **Orphaned data** comes straight from Jenkins' *Manage Old Data* diagnostics. When the item's stored configuration
+  still says which plugin wrote the unreadable part (`plugin="name@version"`), the finding names that plugin.
+  Data written by a *newer* version is not reported, and neither is data that was re-saved since the last restart.
+* **Needs review** is deliberately weak. A plugin is listed only if it is enabled, not bundled, required by no other
+  plugin, and leaves no *observable* trace: no `plugin="…"` stamp in any configuration (jobs, folders, agents, global
+  files), no persisted settings file named after one of its classes, and no step from it in the latest run of any
+  pipeline job. Many plugins (themes, UI helpers, build-time tools, listeners) leave none, so this is **always LOW
+  confidence and INFO severity**: a question for whoever installed it, never a verdict. Jenkinsfile text is not searched
+  for step names.
+* Plugin findings are visible to administrators only. Background: [docs/PLUGINS-FEASIBILITY.md](docs/PLUGINS-FEASIBILITY.md).
 
 ## Using it
 
@@ -196,7 +211,7 @@ Recipients of notifications see instance-wide results: they are not filtered per
 unclassified:
   hygieneAuditor:
     scanCron: "H 3 * * 0"
-    disabledCollectors: ["agents"]   # ids: jobs, agents, credentials, libraries
+    disabledCollectors: ["agents"]   # ids: jobs, agents, credentials, libraries, plugins
     staleJobDays: 365
     ignoreRules:
     - category: "CREDENTIALS"

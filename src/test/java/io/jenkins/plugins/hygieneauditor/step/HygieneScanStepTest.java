@@ -18,8 +18,17 @@ import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 @WithJenkins
 class HygieneScanStepTest {
 
+    JenkinsRule j;
+
     @TestExtension
     public static class Stub extends TestStubs.StubCollector {}
+
+    @org.junit.jupiter.api.BeforeEach
+    void isolateStub(JenkinsRule rule) {
+        this.j = rule;
+        io.jenkins.plugins.hygieneauditor.HygieneAuditorConfiguration.get()
+                .setDisabledCollectors(java.util.List.of("plugins"));
+    }
 
     @AfterEach
     void reset() {
@@ -33,7 +42,7 @@ class HygieneScanStepTest {
     }
 
     @Test
-    void returnsCountsAndLogsSummary(JenkinsRule j) throws Exception {
+    void returnsCountsAndLogsSummary() throws Exception {
         TestStubs.BODY.set(ctx -> ctx.emit(TestStubs.highPluginFinding()));
         WorkflowRun b = run(
                 j,
@@ -45,7 +54,7 @@ class HygieneScanStepTest {
     }
 
     @Test
-    void failOnHighFailsTheBuild(JenkinsRule j) throws Exception {
+    void failOnHighFailsTheBuild() throws Exception {
         TestStubs.BODY.set(ctx -> ctx.emit(TestStubs.highPluginFinding()));
         WorkflowRun b = run(j, "hygieneScan(categories: ['PLUGINS'], failOnHigh: true)");
         assertEquals(Result.FAILURE, b.getResult());
@@ -53,13 +62,13 @@ class HygieneScanStepTest {
     }
 
     @Test
-    void failOnHighPassesWhenNothingIsHigh(JenkinsRule j) throws Exception {
+    void failOnHighPassesWhenNothingIsHigh() throws Exception {
         WorkflowRun b = run(j, "hygieneScan(categories: ['PLUGINS'], failOnHigh: true)");
         j.assertBuildStatusSuccess(b);
     }
 
     @Test
-    void unknownCategoryIsAClearError(JenkinsRule j) throws Exception {
+    void unknownCategoryIsAClearError() throws Exception {
         WorkflowRun b = run(j, "hygieneScan(categories: ['BOGUS'])");
         assertEquals(Result.FAILURE, b.getResult());
         j.assertLogContains("Unknown category 'BOGUS'", b);
@@ -67,7 +76,7 @@ class HygieneScanStepTest {
     }
 
     @Test
-    void scanStartedByPipelineIsRecordedWithPipelineTrigger(JenkinsRule j) throws Exception {
+    void scanStartedByPipelineIsRecordedWithPipelineTrigger() throws Exception {
         j.assertBuildStatusSuccess(run(j, "hygieneScan(categories: ['PLUGINS'])"));
         assertEquals(
                 "pipeline",

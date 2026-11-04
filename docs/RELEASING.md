@@ -119,7 +119,7 @@ cd:
 
 These are honest gaps, not formalities.
 
-1. **Scope.** The plugin/orphaned-data collector, never-used agents, label and cloud
+1. **Scope.** Never-used agents, label and cloud
    analysis, orphaned multibranch branches, workspace footprint and Prometheus metrics are not built (README, *Status*).
    Decide whether a first release without them is acceptable, and keep the README table accurate.
 2. **Unverified on a real fleet:** the fingerprint-tracking switch name

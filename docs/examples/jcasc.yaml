@@ -4,7 +4,7 @@ unclassified:
   hygieneAuditor:
     # --- when to scan (Jenkins cron syntax, one expression per line). Empty = manual and pipeline scans only.
     scanCron: "H 3 * * 0"          # weekly, Sunday, hashed minute in the 3am hour
-    disabledCollectors:            # collector ids that must not run: jobs, agents, credentials, libraries
+    disabledCollectors:            # collector ids that must not run: jobs, agents, credentials, libraries, plugins
     - "agents"
 
     # --- thresholds, in days

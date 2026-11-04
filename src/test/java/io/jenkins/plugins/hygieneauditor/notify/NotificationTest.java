@@ -83,6 +83,7 @@ class NotificationTest {
     @BeforeEach
     void start(JenkinsRule rule) throws Exception {
         j = rule;
+        HygieneAuditorConfiguration.get().setDisabledCollectors(List.of("plugins")); // stub shares the category
         Exploding.CALLS.set(0);
         SENT.clear();
         EmailNotifier.sender = SENT::add;

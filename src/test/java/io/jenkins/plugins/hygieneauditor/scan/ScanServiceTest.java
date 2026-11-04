@@ -32,7 +32,16 @@ class ScanServiceTest {
     @TestExtension
     public static class Stub extends TestStubs.StubCollector {}
 
+    JenkinsRule j;
+
     static final ScanRequest PLUGINS = new ScanRequest(Set.of(Category.PLUGINS), "test");
+
+    /** The real plugin collector shares the stub's category; keep these tests about the engine only. */
+    @org.junit.jupiter.api.BeforeEach
+    void isolateStub(JenkinsRule rule) {
+        this.j = rule;
+        HygieneAuditorConfiguration.get().setDisabledCollectors(List.of("plugins"));
+    }
 
     @AfterEach
     void reset() {
@@ -40,7 +49,7 @@ class ScanServiceTest {
     }
 
     @Test
-    void scanRunsAsSystemAtLowPriorityOnItsOwnThreadEvenWhenStartedByAnonymous(JenkinsRule j) throws Exception {
+    void scanRunsAsSystemAtLowPriorityOnItsOwnThreadEvenWhenStartedByAnonymous() throws Exception {
         AtomicReference<String> auth = new AtomicReference<>();
         AtomicReference<Integer> priority = new AtomicReference<>();
         AtomicReference<String> thread = new AtomicReference<>();
@@ -63,7 +72,7 @@ class ScanServiceTest {
     }
 
     @Test
-    void onlyOneScanAtATimeAndStatusIsVisibleWhileRunning(JenkinsRule j) throws Exception {
+    void onlyOneScanAtATimeAndStatusIsVisibleWhileRunning() throws Exception {
         CountDownLatch started = new CountDownLatch(1);
         CountDownLatch release = new CountDownLatch(1);
         TestStubs.BODY.set(ctx -> {
@@ -85,7 +94,7 @@ class ScanServiceTest {
     }
 
     @Test
-    void cancelStopsARunningScan(JenkinsRule j) throws Exception {
+    void cancelStopsARunningScan() throws Exception {
         CountDownLatch started = new CountDownLatch(1);
         TestStubs.BODY.set(ctx -> {
             started.countDown();
@@ -104,13 +113,13 @@ class ScanServiceTest {
     }
 
     @Test
-    void disabledCollectorsAreNotRun(JenkinsRule j) throws Exception {
-        HygieneAuditorConfiguration.get().setDisabledCollectors(List.of("test-stub"));
+    void disabledCollectorsAreNotRun() throws Exception {
+        HygieneAuditorConfiguration.get().setDisabledCollectors(List.of("test-stub", "plugins"));
         assertThrows(IllegalArgumentException.class, () -> ScanService.get().start(PLUGINS));
     }
 
     @Test
-    void periodicWorkFiresOncePerCronSlotAndNeverAtStartup(JenkinsRule j) throws Exception {
+    void periodicWorkFiresOncePerCronSlotAndNeverAtStartup() throws Exception {
         HygieneScanPeriodicWork work = ExtensionList.lookupSingleton(HygieneScanPeriodicWork.class);
         Instant t0 = Instant.now();
         HygieneAuditorConfiguration.get().setScanCron("* * * * *");

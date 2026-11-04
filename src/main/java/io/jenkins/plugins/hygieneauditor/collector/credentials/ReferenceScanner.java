@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.xml.XMLConstants;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -49,12 +48,7 @@ public final class ReferenceScanner {
      */
     public static void scanXml(@NonNull InputStream in, @NonNull String location, @NonNull ReferenceIndex idx)
             throws XMLStreamException {
-        XMLInputFactory f = XMLInputFactory.newFactory();
-        f.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-        f.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-        f.setProperty(XMLInputFactory.IS_COALESCING, true);
-        trySet(f, XMLConstants.ACCESS_EXTERNAL_DTD, "");
-        trySet(f, XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+        XMLInputFactory f = io.jenkins.plugins.hygieneauditor.security.SafeXml.factory();
         XMLStreamReader r = f.createXMLStreamReader(in);
         try {
             String element = "";
@@ -121,14 +115,6 @@ public final class ReferenceScanner {
         }
         if (t.length() >= SCRIPT_MIN_LENGTH) {
             scanScript(t, location, idx);
-        }
-    }
-
-    private static void trySet(XMLInputFactory f, String name, Object value) {
-        try {
-            f.setProperty(name, value);
-        } catch (IllegalArgumentException ignored) {
-            // property not supported by this parser: DTD/entity support is already off
         }
     }
 
