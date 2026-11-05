@@ -5,3 +5,6 @@ work/
 .vscode/
 .DS_Store
 demo/*.hpi
+
+# design samples kept locally, not part of the plugin
+Hygiene Auditor *dashboard*.html
