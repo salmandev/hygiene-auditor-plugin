@@ -28,7 +28,7 @@
               </dl>
               <div class="ha-callout"><strong>${%Suggested action}</strong><br/>${it.suggestedAction}</div>
               <j:if test="${it.subjectPath != null}">
-                <div class="ha-linkrow"><a class="ha-btn" href="${rootURL}/${it.subjectPath}" target="_blank" rel="noopener">${it.subjectLinkLabel} ↗</a>
+                <div class="ha-linkrow"><a class="jenkins-button" href="${rootURL}/${it.subjectPath}" target="_blank" rel="noopener">${it.subjectLinkLabel} ↗</a>
                 <span class="ha-muted">${%Jenkins asks you to confirm there. This plugin never deletes anything.}</span></div>
               </j:if>
             </section>
@@ -81,7 +81,7 @@
                       <label for="ha-s-snooze">${%Snooze days}</label>
                       <input id="ha-s-snooze" name="snoozeDays" type="number" min="1"/>
                     </div>
-                    <div><button type="submit" class="ha-btn ha-btn-primary">${%Update status}</button></div>
+                    <div><button type="submit" class="jenkins-button jenkins-button--primary">${%Update status}</button></div>
                   </div>
                 </f:form>
               </section>

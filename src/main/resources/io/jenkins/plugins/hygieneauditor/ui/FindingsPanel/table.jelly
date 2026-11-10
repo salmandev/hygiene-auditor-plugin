@@ -49,7 +49,7 @@
           <input id="ha-f-folder" name="folder" type="text" value="${it.selectedFolder}"/>
         </div>
       </j:if>
-      <div><button type="submit" class="ha-btn ha-btn-sm">${%Apply}</button></div>
+      <div><button type="submit" class="jenkins-button">${%Apply}</button></div>
     </form>
   </details>
 

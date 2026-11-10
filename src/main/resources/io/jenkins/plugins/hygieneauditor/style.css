@@ -1,41 +1,34 @@
 /*
- * Hygiene Auditor. Visual language taken from the "Jenkins theme" design sample: pale grey page, white 12px cards, Jenkins
- * blue accent, the system font, a task sidebar, monospace finding names and tinted pills. Dark palette below follows Jenkins' own theme
- * switch (data-theme="dark", or "dark-system" while the OS is dark). Colour never carries meaning alone: every pill,
- * dot and bar also has text.
+ * Hygiene Auditor. Uses the Jenkins theme variables only (no hard-coded colours, no theme-specific rules) and inherits the
+ * Jenkins font. Colour never carries meaning alone: every pill, dot and bar also has text.
  */
-.ha-page, html:has(.ha-page) {
-  --ha-bg: #F7F8FA; --ha-card: #FFFFFF; --ha-border: #DFE3E8; --ha-border-strong: #CBD2D9; --ha-divider: #EDF0F3;
-  --ha-text: #1F2933; --ha-text-2: #3F4A59; --ha-muted: #4B5563;
-  --ha-accent: #0B6AA2; --ha-accent-contrast: #FFFFFF; --ha-accent-line: #0B5A88; --ha-selected: #E3EFF7; --ha-track: #DFE3E8;
-  --ha-high-bg: #FDECEA; --ha-high-fg: #B42318; --ha-med-bg: #FFF4E0; --ha-med-fg: #9A4A06; --ha-low-bg: #EEF1F4; --ha-low-fg: #3F4A59;
-  --ha-ok: #12B76A; --ha-warn: #F79009; --ha-danger: #F04438; --ha-sev-low: #98A2B3; --ha-pos-fg: #067647;
-  --ha-radius: 12px; --ha-gap: 16px;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+.ha-page {
+  /* Every colour comes from the Jenkins theme variables (Design Library -> Colors), so all themes work. */
+  --ha-bg: var(--background, #fff);
+  --ha-card: var(--card-background, var(--background, #fff));
+  --ha-border: var(--card-border-color, var(--light-grey, #ccc));
+  --ha-border-strong: var(--medium-grey, var(--light-grey, #aaa));
+  --ha-divider: var(--very-light-grey, var(--card-border-color, #eee));
+  --ha-text: var(--text-color, CanvasText);
+  --ha-text-2: var(--text-color, CanvasText);
+  --ha-muted: var(--text-color-secondary, GrayText);
+  --ha-accent: var(--accent-color, var(--link-color, #0b6aa2));
+  --ha-accent-contrast: var(--white, #fff);
+  --ha-accent-line: var(--link-color, var(--accent-color, #0b6aa2));
+  --ha-selected: color-mix(in srgb, var(--ha-accent) 14%, transparent);
+  --ha-track: var(--ha-border);
+  --ha-ok: var(--success-color, var(--green, #1a7f37));
+  --ha-warn: var(--warning-color, var(--orange, #d97706));
+  --ha-danger: var(--danger-color, var(--red, #cf222e));
+  --ha-sev-low: var(--ha-muted);
+  --ha-high-bg: color-mix(in srgb, var(--ha-danger) 16%, transparent); --ha-high-fg: var(--ha-danger);
+  --ha-med-bg: color-mix(in srgb, var(--ha-warn) 16%, transparent); --ha-med-fg: var(--ha-warn);
+  --ha-low-bg: color-mix(in srgb, var(--ha-muted) 16%, transparent); --ha-low-fg: var(--ha-text);
+  --ha-pos-fg: var(--ha-ok);
+  --ha-radius: 10px; --ha-gap: 16px;
   color: var(--ha-text);
-  max-width: 1400px; margin: 0 auto; padding: 8px 0 32px;
+  margin: 0; padding: 8px 0 32px;
 }
-html[data-theme="dark"] .ha-page, html[data-theme="dark"]:has(.ha-page) {
-  --ha-bg: #0D1117; --ha-card: #161B22; --ha-border: #2A313C; --ha-border-strong: #3A4350; --ha-divider: #232A33;
-  --ha-text: #E6EDF3; --ha-text-2: #C5CED8; --ha-muted: #8B97A6;
-  --ha-accent: #0B6AA2; --ha-accent-line: #62B4E8; --ha-selected: rgba(98, 180, 232, .14); --ha-track: #2A313C;
-  --ha-high-bg: rgba(248, 81, 73, .16); --ha-high-fg: #FFA198; --ha-med-bg: rgba(210, 153, 34, .16); --ha-med-fg: #E3B341;
-  --ha-low-bg: rgba(139, 151, 166, .16); --ha-low-fg: #B6C0CC;
-  --ha-ok: #32D583; --ha-warn: #FDB022; --ha-danger: #F97066; --ha-sev-low: #8B97A6; --ha-pos-fg: #6CE9A6;
-}
-@media (prefers-color-scheme: dark) {
-  html[data-theme="dark-system"] .ha-page, html[data-theme="dark-system"]:has(.ha-page) {
-    --ha-bg: #0D1117; --ha-card: #161B22; --ha-border: #2A313C; --ha-border-strong: #3A4350; --ha-divider: #232A33;
-    --ha-text: #E6EDF3; --ha-text-2: #C5CED8; --ha-muted: #8B97A6;
-    --ha-accent: #0B6AA2; --ha-accent-line: #62B4E8; --ha-selected: rgba(98, 180, 232, .14); --ha-track: #2A313C;
-    --ha-high-bg: rgba(248, 81, 73, .16); --ha-high-fg: #FFA198; --ha-med-bg: rgba(210, 153, 34, .16); --ha-med-fg: #E3B341;
-    --ha-low-bg: rgba(139, 151, 166, .16); --ha-low-fg: #B6C0CC;
-    --ha-ok: #32D583; --ha-warn: #FDB022; --ha-danger: #F97066; --ha-sev-low: #8B97A6; --ha-pos-fg: #6CE9A6;
-  }
-}
-/* page background behind the cards: the palette is also set on <html>, so <body> can use the same variable */
-body:has(.ha-page) { background: var(--ha-bg); }
-
 .ha-page * { box-sizing: border-box; }
 .ha-page h1, .ha-page h2, .ha-page h3, .ha-page p { margin: 0; }
 .ha-muted { color: var(--ha-muted); }
@@ -56,22 +49,14 @@ body:has(.ha-page) { background: var(--ha-bg); }
 .ha-top-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .ha-top-actions form { margin: 0; }
 
-.ha-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 10px; border: 1px solid var(--ha-border-strong); background: var(--ha-card); color: var(--ha-text); font: inherit; font-weight: 600; font-size: 14px; line-height: 1.2; text-decoration: none; cursor: pointer; }
-.ha-page a.ha-btn, .ha-page a.ha-btn:visited { color: var(--ha-text); text-decoration: none; }
-.ha-btn:hover { border-color: var(--ha-muted); text-decoration: none; color: var(--ha-text); }
-.ha-btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--ha-accent-line) 45%, transparent); outline-offset: 2px; }
-.ha-btn-primary { background: var(--ha-accent); border-color: var(--ha-accent); color: var(--ha-accent-contrast); padding: 10px 18px; }
-.ha-page a.ha-btn-primary, .ha-page a.ha-btn-primary:visited { color: var(--ha-accent-contrast); }
-.ha-btn-primary:hover { background: color-mix(in srgb, var(--ha-accent) 88%, var(--ha-text)); border-color: transparent; color: var(--ha-accent-contrast); }
-.ha-btn-danger { color: var(--ha-high-fg); }
-.ha-btn-sm { padding: 7px 12px; font-size: 13px; }
+.ha-top-actions .jenkins-button { margin: 0; }
 
 /* export menu: a native <details>, no script */
 .ha-menu { position: relative; }
 .ha-menu > summary { list-style: none; }
 .ha-menu > summary::-webkit-details-marker { display: none; }
 .ha-menu[open] > summary { border-color: var(--ha-muted); }
-.ha-menu-list { position: absolute; right: 0; z-index: 20; min-width: 15rem; margin-top: 6px; padding: 6px; background: var(--ha-card); border: 1px solid var(--ha-border); border-radius: 12px; box-shadow: 0 10px 30px color-mix(in srgb, var(--ha-text) 14%, transparent); display: grid; }
+.ha-menu-list { position: absolute; right: 0; z-index: 20; min-width: 15rem; margin-top: 6px; padding: 6px; background: var(--ha-card); border: 1px solid var(--ha-border); border-radius: 10px; box-shadow: 0 10px 30px color-mix(in srgb, var(--ha-text) 14%, transparent); display: grid; }
 .ha-menu-list a { padding: 8px 10px; border-radius: 8px; color: var(--ha-text); text-decoration: none; font-size: 14px; }
 .ha-menu-list a:hover { background: var(--ha-low-bg); }
 .ha-menu-list .ha-menu-head { padding: 8px 10px 4px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ha-muted); }
@@ -82,7 +67,7 @@ body:has(.ha-page) { background: var(--ha-bg); }
 .ha-ring { flex: none; }
 .ha-ring .ha-ring-track { fill: none; stroke: var(--ha-track); stroke-width: 9; }
 .ha-ring .ha-ring-value { fill: none; stroke: var(--ha-accent-line); stroke-width: 9; stroke-linecap: round; }
-.ha-ring text { font: 700 22px Inter, system-ui, sans-serif; fill: var(--ha-text); }
+.ha-ring text { font-weight: 700; font-size: 22px; font-family: inherit; fill: var(--ha-text); }
 .ha-ring-label { font-size: 13px; color: var(--ha-muted); }
 .ha-ring-headline { font-size: 17px; font-weight: 700; margin-top: 2px; }
 .ha-ring-detail { margin-top: 3px; font-size: 13px; color: var(--ha-muted); line-height: 1.35; }
@@ -208,7 +193,7 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
   .ha-metric { padding: 14px 16px; }
   .ha-metric-n { font-size: 28px; }
   .ha-top-actions { width: 100%; }
-  .ha-top-actions .ha-btn, .ha-top-actions .ha-menu { flex: 1 1 auto; }
+  .ha-top-actions .jenkins-button, .ha-top-actions .ha-menu { flex: 1 1 auto; }
   .ha-top-actions .ha-menu > summary { width: 100%; }
   .ha-menu-list { left: 0; right: auto; }
 }

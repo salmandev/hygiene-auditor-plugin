@@ -49,7 +49,7 @@
 
           <div class="ha-top-actions">
             <details class="ha-menu">
-              <summary class="ha-btn">${%Export}</summary>
+              <summary class="jenkins-button">${%Export}</summary>
               <div class="ha-menu-list">
                 <a href="exportCsv?${panel.exportQuery}">${%Findings as CSV}</a>
                 <a href="exportJson?${panel.exportQuery}">${%Findings as JSON}</a>
@@ -60,20 +60,20 @@
               </div>
             </details>
             <j:if test="${it.canConfigure}">
-              <a href="${rootURL}/manage/configure" class="ha-btn">${%Settings}</a>
+              <a href="${rootURL}/manage/configure" class="jenkins-button">${%Settings}</a>
             </j:if>
             <j:if test="${it.canScan}">
               <j:choose>
                 <j:when test="${summary.scanRunning}">
                   <f:form method="post" action="cancel" name="cancel">
                     <input type="hidden" name="fromUi" value="true"/>
-                    <button type="submit" class="ha-btn ha-btn-danger">${%Cancel scan}</button>
+                    <button type="submit" class="jenkins-button jenkins-button--destructive">${%Cancel scan}</button>
                   </f:form>
                 </j:when>
                 <j:otherwise>
                   <f:form method="post" action="scan" name="scan">
                     <input type="hidden" name="fromUi" value="true"/>
-                    <button type="submit" class="ha-btn ha-btn-primary">${%Scan now}</button>
+                    <button type="submit" class="jenkins-button jenkins-button--primary">${%Scan now}</button>
                   </f:form>
                 </j:otherwise>
               </j:choose>

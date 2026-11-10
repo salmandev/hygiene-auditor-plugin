@@ -347,11 +347,11 @@ class UiPagesTest {
         String css = new String(getClass()
                 .getResourceAsStream("/io/jenkins/plugins/hygieneauditor/style.css")
                 .readAllBytes());
-        // Light palette by default; the dark palette follows Jenkins' own theme switch, in both of its forms.
-        assertTrue(css.contains("html[data-theme=\"dark\"] .ha-page"), "fixed dark theme");
+        // Colours come from the Jenkins theme variables, so no theme-specific rules and no width cap on the page.
         assertTrue(
-                css.contains("prefers-color-scheme: dark") && css.contains("html[data-theme=\"dark-system\"] .ha-page"),
-                "system-following dark theme");
+                css.contains("var(--card-background") && css.contains("var(--text-color"), "Jenkins theme variables");
+        assertFalse(css.contains("data-theme"), "no theme-specific rules");
+        assertFalse(css.contains("max-width: 1400px"), "no fixed page width");
         assertTrue(
                 css.contains("var(--ha-card)") && css.contains("var(--ha-text)"),
                 "components use the palette variables");

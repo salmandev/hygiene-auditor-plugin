@@ -12,8 +12,8 @@
             <p class="ha-subtitle">${%Review it, then run it yourself. Nothing has been changed.}</p>
           </div>
           <div class="ha-actions">
-            <button type="button" class="ha-btn ha-btn-primary" data-ha-copy="ha-plan-text">${%Copy}</button>
-            <a class="ha-btn" href="${it.downloadUrl}" title="${it.fileName}">${%Download file}</a>
+            <button type="button" class="jenkins-button jenkins-button--primary" data-ha-copy="ha-plan-text">${%Copy}</button>
+            <a class="jenkins-button" href="${it.downloadUrl}" title="${it.fileName}">${%Download file}</a>
           </div>
         </header>
 
