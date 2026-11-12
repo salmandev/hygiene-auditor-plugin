@@ -223,3 +223,4 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 
 /* before Jenkins lets a subpage ask for the wide layout (it can on the newest LTS), use the room that is there */
 .app-settings-container__inner:has(.ha-page) { max-width: none; }
+.app-page-body:has(.ha-page) { max-width: 1700px; }
