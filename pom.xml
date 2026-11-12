@@ -73,6 +73,10 @@
     </dependency>
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
+      <artifactId>ionicons-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.jenkins.plugins</groupId>
       <artifactId>pipeline-groovy-lib</artifactId>
       <optional>true</optional>
     </dependency>
@@ -141,20 +145,13 @@
       <artifactId>workflow-basic-steps</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.jenkins-ci.plugins.workflow</groupId>
+      <artifactId>workflow-cps</artifactId>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
-
-  <profiles>
-    <profile>
-      <!-- The palantir formatter used by Spotless cannot run on JDK 25+. Formatting is still checked on the JDK 21 build. -->
-      <id>jdk25-skip-format-check</id>
-      <activation>
-        <jdk>[25,)</jdk>
-      </activation>
-      <properties>
-        <spotless.check.skip>true</spotless.check.skip>
-      </properties>
-    </profile>
-  </profiles>
 
   <repositories>
     <repository>
@@ -168,4 +165,17 @@
       <url>https://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
+
+  <profiles>
+    <profile>
+      <!-- The palantir formatter used by Spotless cannot run on JDK 25+. Formatting is still checked on the JDK 21 build. -->
+      <id>jdk25-skip-format-check</id>
+      <activation>
+        <jdk>[25,)</jdk>
+      </activation>
+      <properties>
+        <spotless.check.skip>true</spotless.check.skip>
+      </properties>
+    </profile>
+  </profiles>
 </project>

@@ -6,12 +6,11 @@
       <div class="ha-page">
         <header class="ha-detail-top">
           <div>
-            <a class="ha-back" href="../..">← ${%Back to findings}</a>
             <div class="ha-detail-title">
               <h1 class="ha-mono">${it.subjectDisplayName}</h1>
               <span class="ha-pill ha-conf-${it.confidence.toLowerCase()}">${it.confidenceLabel} ${%confidence}</span>
               <span class="ha-sev ha-sev-${it.severity.toLowerCase()}">${it.severityLabel} ${%severity}</span>
-              <span class="ha-status ha-status-${it.status.toLowerCase()}">${it.statusLabel}<j:if test="${it.statusReason != null}"> — ${it.statusReason}</j:if><j:if test="${it.snoozeUntil != null}"> (${%until} ${it.snoozeUntil})</j:if></span>
+              <span class="ha-status ha-status-${it.status.toLowerCase()}">${it.statusLabel}<j:if test="${it.statusReason != null}"> <span class="ha-sep">—</span> ${it.statusReason}</j:if><j:if test="${it.snoozeUntil != null}"> (${%until} ${it.snoozeUntil})</j:if></span>
             </div>
           </div>
         </header>
@@ -26,7 +25,19 @@
                 <div><dt>${%First seen}</dt><dd><time datetime="${it.firstSeen}" title="${it.firstSeen}">${it.firstSeenShort}</time> <span class="ha-sep">·</span><span class="ha-muted">${it.firstSeenAgo}</span></dd></div>
                 <div><dt>${%Last seen}</dt><dd><time datetime="${it.lastSeen}" title="${it.lastSeen}">${it.lastSeenShort}</time> <span class="ha-sep">·</span><span class="ha-muted">${it.lastSeenAgo}</span></dd></div>
               </dl>
-              <div class="ha-callout"><strong>${%Suggested action}</strong><br/>${it.suggestedAction}</div>
+              <j:choose>
+                <j:when test="${it.status == 'IGNORED' or it.status == 'ACKNOWLEDGED'}">
+                  <div class="ha-callout ha-decision ha-decision-${it.status.toLowerCase()}" role="status">
+                    <strong class="ha-decision-title"><j:choose><j:when test="${it.status == 'IGNORED'}">${%This finding is ignored}</j:when><j:otherwise>${%This finding is acknowledged}</j:otherwise></j:choose></strong>
+                    <j:if test="${it.statusReason != null}"><br/>${it.statusReason}</j:if>
+                    <j:if test="${it.snoozeUntil != null}"><br/><span class="ha-muted">${%Snoozed until} ${it.snoozeUntil}</span></j:if>
+                    <br/><span class="ha-muted">${%No action is needed. Change the decision on the right to review this finding again.}</span>
+                  </div>
+                </j:when>
+                <j:otherwise>
+                  <div class="ha-callout"><strong>${%Suggested action}</strong><br/>${it.suggestedAction}</div>
+                </j:otherwise>
+              </j:choose>
               <j:if test="${it.subjectPath != null}">
                 <div class="ha-linkrow"><a class="jenkins-button" href="${rootURL}/${it.subjectPath}" target="_blank" rel="noopener">${it.subjectLinkLabel} ↗</a>
                 <span class="ha-muted">${%Jenkins asks you to confirm there. This plugin never deletes anything.}</span></div>
@@ -66,20 +77,22 @@
                   <div class="ha-form">
                     <div>
                       <label for="ha-s-status">${%Set status}</label>
-                      <select id="ha-s-status" name="status">
-                        <option value="OPEN">${%Open}</option>
-                        <option value="ACKNOWLEDGED">${%Acknowledged}</option>
-                        <option value="IGNORED">${%Ignored}</option>
+                      <div class="jenkins-select">
+                        <select class="jenkins-select__input" id="ha-s-status" name="status">
+                        <option value="OPEN" selected="${it.status == 'OPEN' ? 'true' : null}">${%Open}</option>
+                        <option value="ACKNOWLEDGED" selected="${it.status == 'ACKNOWLEDGED' ? 'true' : null}">${%Acknowledged}</option>
+                        <option value="IGNORED" selected="${it.status == 'IGNORED' ? 'true' : null}">${%Ignored}</option>
                       </select>
+                      </div>
                     </div>
                     <div>
                       <label for="ha-s-reason">${%Reason}</label>
-                      <input id="ha-s-reason" name="reason" type="text" maxlength="500" aria-describedby="ha-s-reason-hint"/>
+                      <input id="ha-s-reason" name="reason" type="text" class="jenkins-input" maxlength="500" aria-describedby="ha-s-reason-hint"/>
                       <small id="ha-s-reason-hint" class="ha-muted">${%Required when ignoring.}</small>
                     </div>
                     <div>
                       <label for="ha-s-snooze">${%Snooze days}</label>
-                      <input id="ha-s-snooze" name="snoozeDays" type="number" min="1"/>
+                      <input id="ha-s-snooze" name="snoozeDays" type="number" class="jenkins-input" min="1"/>
                     </div>
                     <div><button type="submit" class="jenkins-button jenkins-button--primary">${%Update status}</button></div>
                   </div>

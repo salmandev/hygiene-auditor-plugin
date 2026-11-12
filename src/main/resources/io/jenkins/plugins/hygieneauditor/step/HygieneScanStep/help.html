@@ -1,0 +1,18 @@
+<div>
+  Runs a Hygiene Auditor scan, waits for it to finish and returns the counts. The scan is read-only: nothing is
+  changed or deleted. The build needs the Hygiene Auditor <em>Scan</em> permission.
+  <p>
+    The step returns a map with these keys:
+  </p>
+  <ul>
+    <li><code>scanId</code>: the id of the scan</li>
+    <li><code>state</code>: how the scan ended, for example <code>COMPLETED</code> or <code>PARTIAL</code></li>
+    <li><code>open</code>: open findings in the scanned categories that the build may see</li>
+    <li><code>high</code>: how many of those have high severity</li>
+    <li><code>created</code>: findings this scan found for the first time</li>
+    <li><code>resolved</code>: findings this scan found to be resolved</li>
+  </ul>
+  Only counts are returned, never the findings themselves.
+  <pre>def result = hygieneScan(categories: ['CREDENTIALS', 'JOBS'])
+echo "${result.open} open, ${result.high} high severity"</pre>
+</div>

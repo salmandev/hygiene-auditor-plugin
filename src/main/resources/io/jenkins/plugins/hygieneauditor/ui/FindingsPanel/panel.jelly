@@ -10,6 +10,10 @@
         </div>
         <p class="ha-muted ha-panel-sub">${s.typeLabel} · <span class="ha-sev ha-sev-${s.severity.toLowerCase()}">${s.severityLabel} ${%severity}</span></p>
 
+        <j:if test="${s.status == 'IGNORED' or s.status == 'ACKNOWLEDGED'}">
+          <p class="ha-callout ha-decision ha-decision-${s.status.toLowerCase()}" role="status"><strong>${s.statusLabel}</strong><j:if test="${s.statusReason != null}"> <span class="ha-sep">—</span> ${s.statusReason}</j:if></p>
+        </j:if>
+
         <h3>${%Why we think it is unused}</h3>
         <ul>
           <j:forEach var="w" items="${s.whyLines}"><li>${w}</li></j:forEach>
@@ -34,7 +38,7 @@
           <j:if test="${s.subjectPath != null}">
             <a class="jenkins-button" href="${rootURL}/${s.subjectPath}" target="_blank" rel="noopener">${s.subjectLinkLabel} ↗</a>
           </j:if>
-          <j:if test="${it.global}">
+          <j:if test="${it.global and s.status != 'IGNORED'}">
             <a class="jenkins-button jenkins-button--primary" href="plan/?format=${s.removalSupported ? 'groovy' : 'checklist'}&amp;id=${s.id}" target="_blank" rel="noopener">${%Removal plan}</a>
           </j:if>
         </div>

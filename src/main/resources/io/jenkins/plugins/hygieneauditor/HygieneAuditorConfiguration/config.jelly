@@ -29,18 +29,11 @@
       <f:entry title="${%Email recipients}" field="emailRecipients"><f:textbox/></f:entry>
     </f:advanced>
     <f:advanced title="${%Ignore rules}">
-      <f:entry title="${%Exemptions}"
-               description="${%A finding matching every filled-in field of a rule is never recorded. Subject is a regular expression, for example ^prod-.* for credential ids.}">
-        <f:repeatable field="ignoreRules" add="${%Add rule}" minimum="0">
-          <table width="100%">
-            <f:entry title="${%Category}" field="category"><f:textbox/></f:entry>
-            <f:entry title="${%Finding type}" field="type"><f:textbox/></f:entry>
-            <f:entry title="${%Subject regex}" field="subject"><f:textbox/></f:entry>
-            <f:entry title="${%Folder}" field="folder"><f:textbox/></f:entry>
-            <f:entry title="${%Reason}" field="reason"><f:textbox/></f:entry>
-            <f:entry><div align="right"><f:repeatableDeleteButton/></div></f:entry>
-          </table>
-        </f:repeatable>
+      <f:entry title="${%Exemptions}" field="ignoreRules"
+               description="${%A finding matching every filled-in field of a rule is never recorded.}">
+        <f:repeatableProperty field="ignoreRules" add="${%Add rule}" minimum="0">
+          <f:block><div align="right"><f:repeatableDeleteButton/></div></f:block>
+        </f:repeatableProperty>
       </f:entry>
     </f:advanced>
   </f:section>

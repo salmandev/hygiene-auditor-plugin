@@ -183,5 +183,16 @@ public class IgnoreRule extends AbstractDescribableImpl<IgnoreRule> {
         public String getDisplayName() {
             return "Hygiene Auditor exemption";
         }
+
+        /** The categories a rule can be limited to; the empty entry matches every category. */
+        @NonNull
+        public hudson.util.ListBoxModel doFillCategoryItems() {
+            hudson.util.ListBoxModel items = new hudson.util.ListBoxModel();
+            items.add(io.jenkins.plugins.hygieneauditor.Messages.IgnoreRule_AnyCategory(), "");
+            for (Category c : Category.values()) {
+                items.add(c.name(), c.name());
+            }
+            return items;
+        }
     }
 }

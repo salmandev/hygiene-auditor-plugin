@@ -72,11 +72,18 @@ public class HygieneScanStep extends Step {
 
     static Set<Category> parse(List<String> names) throws AbortException {
         Set<Category> out = EnumSet.noneOf(Category.class);
-        for (String n : names) {
-            try {
-                out.add(Category.valueOf(n.trim().toUpperCase(Locale.ROOT)));
-            } catch (IllegalArgumentException e) {
-                throw new AbortException("Unknown category '" + n + "'. Valid: " + List.of(Category.values()));
+        for (String entry : names) {
+            // The Pipeline Syntax form has one text box, so an entry may hold several names: "JOBS, CREDENTIALS".
+            for (String n : entry.split(",")) {
+                if (n.isBlank()) {
+                    continue;
+                }
+                try {
+                    out.add(Category.valueOf(n.trim().toUpperCase(Locale.ROOT)));
+                } catch (IllegalArgumentException e) {
+                    throw new AbortException(
+                            "Unknown category '" + n.trim() + "'. Valid: " + List.of(Category.values()));
+                }
             }
         }
         return out;

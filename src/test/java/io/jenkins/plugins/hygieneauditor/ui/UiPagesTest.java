@@ -97,7 +97,6 @@ class UiPagesTest {
         HtmlPage page = as("admin").goTo(BASE);
         String text = page.asNormalizedText();
         assertTrue(text.contains("Hygiene Auditor"));
-        assertTrue(text.contains("Controller hygiene"));
         assertTrue(text.contains("Review progress"), "the ring");
         assertEquals(5, page.getByXPath("//a[contains(@class,'ha-metric')]").size(), "one card per category");
         assertTrue(text.contains("Jobs and folders") && text.contains("Credentials") && text.contains("Agents"));
@@ -157,29 +156,63 @@ class UiPagesTest {
         assertEquals(Status.IGNORED, f.status());
         assertEquals("planned decommission", f.statusReason());
         assertTrue(after.asNormalizedText().contains("planned decommission"));
+        assertNotNull(
+                after.getFirstByXPath("//div[contains(@class,'ha-decision-ignored')]"),
+                "the decision is a prominent callout");
+        assertTrue(after.asNormalizedText().contains("This finding is ignored"));
+        assertFalse(after.asNormalizedText().contains("Suggested action"), "a decision replaces the suggestion");
     }
 
     @Test
-    void theSidebarLinksTheSectionsAndOnlyOffersSettingsToThoseWhoMayConfigure() throws Exception {
+    void thePageHasNoSidebarOfItsOwnAndOnlyOffersSettingsToThoseWhoMayConfigure() throws Exception {
         HtmlPage admin = as("admin").goTo(BASE);
-        assertEquals(
-                "Overview",
-                admin.<org.htmlunit.html.HtmlElement>getFirstByXPath("//nav[@class='ha-nav']//a[@aria-current='page']")
-                        .getTextContent()
-                        .trim());
+        assertTrue(
+                admin.getByXPath("//nav[@class='ha-nav']").isEmpty(), "Manage Jenkins already provides the side panel");
+        assertNotNull(admin.getElementById("findings"), "the findings section is there");
         assertEquals(
                 1,
-                admin.getByXPath("//nav[@class='ha-nav']//a[@href='#findings']").size());
-        assertNotNull(admin.getElementById("findings"), "the Findings link has a target");
-        assertEquals(
-                1,
-                admin.getByXPath("//nav[@class='ha-nav']//a[contains(@href,'manage/configure')]")
-                        .size());
+                admin.getByXPath("//a[contains(@href,'manage/configure')][contains(@class,'jenkins-button')]")
+                        .size(),
+                "one settings link, not two");
         HtmlPage viewer = as("viewer").goTo(BASE);
         assertTrue(
-                viewer.getByXPath("//nav[@class='ha-nav']//a[contains(@href,'manage/configure')]")
+                viewer.getByXPath("//a[contains(@href,'manage/configure')][contains(@class,'jenkins-button')]")
                         .isEmpty(),
                 "no settings link without permission");
+    }
+
+    @Test
+    void exportUsesTheJenkinsDropdownMenuAndNoPageHasBackNavigation() throws Exception {
+        JenkinsRule.WebClient wc = as("admin");
+        HtmlPage page = wc.goTo(BASE);
+        assertEquals(
+                1,
+                page.getByXPath("//button[@data-dropdown='true'][contains(normalize-space(.),'Export')]")
+                        .size(),
+                "Export is an overflow button");
+        String xml = page.asXml();
+        for (String item :
+                new String[] {"exportCsv", "exportJson", "format=groovy", "format=cli", "format=checklist"}) {
+            assertTrue(xml.contains(item), "menu offers " + item);
+        }
+        assertFalse(xml.contains("jenkins-button--destructive"), "Jenkins does not define that class");
+        assertFalse(xml.contains("Back to findings"));
+        assertFalse(
+                wc.goTo(BASE + "finding/" + stale.id() + "/").asNormalizedText().contains("Back to findings"));
+    }
+
+    @Test
+    void everyFindingRowCarriesTheLinkThatSelectsIt() throws Exception {
+        HtmlPage page = as("admin").goTo(BASE);
+        var rows = page.getByXPath("//table[contains(@class,'ha-table')]/tbody/tr[@data-ha-href]");
+        assertEquals(2, rows.size());
+        for (Object r : rows) {
+            HtmlElement row = (HtmlElement) r;
+            assertFalse(row.getAttribute("data-ha-href").isEmpty());
+            assertNotNull(
+                    row.getFirstByXPath(".//a[@class and contains(@class,'ha-name')]"),
+                    "the link still works without script");
+        }
     }
 
     @Test

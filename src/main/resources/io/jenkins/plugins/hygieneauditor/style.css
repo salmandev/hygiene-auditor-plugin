@@ -8,7 +8,7 @@
   --ha-card: var(--card-background, var(--background, #fff));
   --ha-border: var(--card-border-color, var(--light-grey, #ccc));
   --ha-border-strong: var(--medium-grey, var(--light-grey, #aaa));
-  --ha-divider: var(--very-light-grey, var(--card-border-color, #eee));
+  --ha-divider: color-mix(in srgb, var(--text-color, CanvasText) 10%, transparent);
   --ha-text: var(--text-color, CanvasText);
   --ha-text-2: var(--text-color, CanvasText);
   --ha-muted: var(--text-color-secondary, GrayText);
@@ -51,16 +51,6 @@
 
 .ha-top-actions .jenkins-button { margin: 0; }
 
-/* export menu: a native <details>, no script */
-.ha-menu { position: relative; }
-.ha-menu > summary { list-style: none; }
-.ha-menu > summary::-webkit-details-marker { display: none; }
-.ha-menu[open] > summary { border-color: var(--ha-muted); }
-.ha-menu-list { position: absolute; right: 0; z-index: 20; min-width: 15rem; margin-top: 6px; padding: 6px; background: var(--ha-card); border: 1px solid var(--ha-border); border-radius: 10px; box-shadow: 0 10px 30px color-mix(in srgb, var(--ha-text) 14%, transparent); display: grid; }
-.ha-menu-list a { padding: 8px 10px; border-radius: 8px; color: var(--ha-text); text-decoration: none; font-size: 14px; }
-.ha-menu-list a:hover { background: var(--ha-low-bg); }
-.ha-menu-list .ha-menu-head { padding: 8px 10px 4px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--ha-muted); }
-
 /* ---- headline row */
 .ha-cards-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--ha-gap); margin-bottom: var(--ha-gap); }
 .ha-ring-card { grid-column: span 2; display: flex; gap: 18px; align-items: center; padding: 20px; }
@@ -100,22 +90,22 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 .ha-fpill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--ha-border-strong); background: var(--ha-card); color: var(--ha-text-2); font-size: 13px; font-weight: 500; text-decoration: none; }
 .ha-page a.ha-fpill, .ha-page a.ha-fpill:visited { color: var(--ha-text-2); text-decoration: none; }
-.ha-page a.ha-fpill-active, .ha-page a.ha-fpill-active:visited, .ha-page a.ha-fpill-active:hover { color: var(--ha-accent-contrast); }
+.ha-page a.ha-fpill-active, .ha-page a.ha-fpill-active:visited, .ha-page a.ha-fpill-active:hover { color: var(--button-color--primary, var(--ha-accent-contrast)); }
 .ha-fpill:hover { border-color: var(--ha-muted); text-decoration: none; color: var(--ha-text); }
 .ha-fpill b { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ha-muted); }
-.ha-fpill-active { background: var(--ha-accent); border-color: var(--ha-accent); color: var(--ha-accent-contrast); font-weight: 600; }
+.ha-fpill-active { background: var(--ha-accent); border-color: var(--ha-accent); color: var(--button-color--primary, var(--ha-accent-contrast)); font-weight: 600; }
 .ha-fpill-active b { color: inherit; }
-.ha-fpill-active:hover { color: var(--ha-accent-contrast); }
+.ha-fpill-active:hover { color: var(--button-color--primary, var(--ha-accent-contrast)); }
 
 .ha-adv { margin: 0 20px 12px; font-size: 13px; }
 .ha-adv > summary { cursor: pointer; color: var(--ha-muted); width: max-content; }
 .ha-adv form { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: end; padding: 12px 0 4px; }
 .ha-adv label { display: block; font-size: 12px; margin-bottom: 3px; color: var(--ha-muted); }
-.ha-adv select, .ha-adv input[type=text] { padding: 7px 10px; border-radius: 8px; border: 1px solid var(--ha-border-strong); background: var(--ha-card); color: var(--ha-text); font: inherit; min-width: 9rem; }
+.ha-adv .jenkins-select, .ha-adv .jenkins-input { min-width: 9rem; }
 
 .ha-scroll { overflow-x: auto; }
 .ha-table { width: 100%; border-collapse: collapse; margin: 0; border: 0; }
-.ha-table th { text-align: left; font-size: 12px; font-weight: 600; color: var(--ha-muted); padding: 10px 16px; border-bottom: 1px solid var(--ha-border); white-space: nowrap; background: transparent; }
+.ha-table th { text-align: left; font-size: 12px; font-weight: 600; color: var(--ha-muted); padding: 10px 16px; border-bottom: 1px solid var(--ha-divider); white-space: nowrap; background: transparent; }
 .ha-table td { padding: 14px 16px; border-bottom: 1px solid var(--ha-divider); font-size: 14px; vertical-align: top; background: transparent; }
 .ha-table tr:last-child td { border-bottom: 0; }
 .ha-table tbody tr:hover td { background: color-mix(in srgb, var(--ha-selected) 55%, transparent); }
@@ -142,7 +132,7 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-panel .ha-note { margin-top: 14px; font-size: 13px; color: var(--ha-muted); line-height: 1.45; }
 .ha-panel-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .ha-panel-actions form { margin: 0; }
-.ha-page a.ha-panel-link, .ha-page a.ha-back, .ha-page .ha-pager a { color: var(--ha-accent-line); text-decoration: none; }
+.ha-page a.ha-panel-link, .ha-page .ha-pager a { color: var(--ha-accent-line); text-decoration: none; }
 .ha-panel-link { display: inline-block; margin-top: 12px; font-size: 13px; color: var(--ha-accent-line); text-decoration: none; font-weight: 600; }
 .ha-side-title { font-size: 14px; font-weight: 700; color: var(--ha-text-2); margin-bottom: 10px; }
 .ha-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 6px; padding: 0; list-style: none; font-size: 12px; color: var(--ha-muted); }
@@ -165,7 +155,6 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-detail-top { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start; margin: 8px 0 18px; }
 .ha-detail-title { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .ha-detail-title .ha-mono { font-size: 22px; word-break: break-word; }
-.ha-back { font-size: 14px; color: var(--ha-accent-line); text-decoration: none; font-weight: 600; }
 .ha-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--ha-gap); align-items: start; }
 .ha-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 16px 28px; margin: 0; padding: 20px; }
 .ha-facts dt { font-size: 12px; color: var(--ha-muted); margin: 0; }
@@ -177,7 +166,6 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-weight-neg { background: var(--ha-high-bg); color: var(--ha-high-fg); }
 .ha-form { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: end; padding: 20px; }
 .ha-form label { display: block; font-size: 12px; margin-bottom: 4px; color: var(--ha-muted); }
-.ha-form select, .ha-form input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--ha-border-strong); background: var(--ha-card); color: var(--ha-text); font: inherit; }
 
 /* ---- responsive */
 @media (max-width: 1200px) { .ha-cards-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .ha-ring-card { grid-column: 1 / -1; } }
@@ -193,9 +181,7 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
   .ha-metric { padding: 14px 16px; }
   .ha-metric-n { font-size: 28px; }
   .ha-top-actions { width: 100%; }
-  .ha-top-actions .jenkins-button, .ha-top-actions .ha-menu { flex: 1 1 auto; }
-  .ha-top-actions .ha-menu > summary { width: 100%; }
-  .ha-menu-list { left: 0; right: auto; }
+  .ha-top-actions .jenkins-button { flex: 1 1 auto; }
 }
 .ha-panel-sub { margin-top: 6px; font-size: 13px; color: var(--ha-muted); }
 .ha-table caption.ha-table-caption { text-align: left; caption-side: top; }
@@ -204,7 +190,7 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-side .ha-panel > h3:first-child { margin-top: 0; }
 .ha-side .ha-panel > .ha-note:first-of-type { margin-top: 0; }
 .ha-form small { display: block; margin-top: 4px; font-size: 12px; }
-.ha-form input[type=text], .ha-form input[type=number] { width: 100%; min-width: 12rem; }
+.ha-form .jenkins-input { width: 100%; min-width: 12rem; }
 .ha-side .ha-panel > h3:first-child { margin-top: 0; }
 .ha-linkrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 20px 20px; font-size: 13px; }
 
@@ -217,20 +203,9 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-plan-card { overflow: hidden; }
 .ha-plan { box-sizing: border-box; width: 0; min-width: 100%; } /* long lines scroll inside the card; they must not widen the page */
 
-/* page layout: task sidebar + content, like other Jenkins pages */
-.ha-layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 24px; align-items: start; }
-.ha-content { min-width: 0; container: ha / inline-size; }
-.ha-nav { display: flex; flex-direction: column; gap: 2px; position: sticky; top: 16px; margin-top: 8px; }
-.ha-page .ha-nav a { display: block; padding: 9px 12px; border-radius: 8px; color: var(--ha-text); text-decoration: none; font-size: 14px; font-weight: 500; }
-.ha-page .ha-nav a:hover { background: var(--ha-divider); }
-.ha-page .ha-nav a[aria-current="page"] { background: var(--ha-selected); color: var(--ha-accent-line); font-weight: 600; }
-.ha-page .ha-nav a:focus-visible { outline: 3px solid color-mix(in srgb, var(--ha-accent-line) 45%, transparent); outline-offset: 1px; }
-@media (max-width: 900px) {
-  .ha-layout { grid-template-columns: 1fr; gap: 8px; }
-  .ha-nav { flex-direction: row; flex-wrap: wrap; position: static; }
-}
 
-/* the sidebar takes width, so the content reflows by its own width, not the window's */
+/* the page sits next to the Manage Jenkins side panel, so it reflows by its own width, not the window's */
+.ha-page { container: ha / inline-size; }
 @container ha (max-width: 1080px) {
   .ha-main, .ha-detail-grid { grid-template-columns: 1fr; }
   .ha-cards-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -238,3 +213,13 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 }
 @container ha (max-width: 760px) { .ha-cards-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @container ha (max-width: 520px) { .ha-cards-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* a whole row selects its finding (rows.js); the link inside still works without script */
+.ha-table-rows tbody tr.ha-row { cursor: pointer; }
+.ha-decision { font-size: 15px; }
+.ha-decision-title { font-size: 17px; }
+.ha-decision-ignored { background: var(--ha-low-bg); border-color: var(--ha-border-strong); }
+.ha-decision-acknowledged { background: color-mix(in srgb, var(--ha-ok) 14%, transparent); border-color: color-mix(in srgb, var(--ha-ok) 40%, transparent); }
+
+/* before Jenkins lets a subpage ask for the wide layout (it can on the newest LTS), use the room that is there */
+.app-settings-container__inner:has(.ha-page) { max-width: none; }

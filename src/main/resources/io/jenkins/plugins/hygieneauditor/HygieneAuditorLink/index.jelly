@@ -1,26 +1,14 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">
-  <l:layout title="${%Hygiene Auditor}" type="one-column" permission="${it.requiredPermission}">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form" xmlns:dd="/lib/layout/dropdowns">
+  <l:settings-subpage permission="${it.requiredPermission}" width="wide" noDefer="true">
     <st:adjunct includes="io.jenkins.plugins.hygieneauditor.style"/>
-    <l:main-panel>
       <j:set var="summary" value="${it.summary}"/>
       <j:set var="scan" value="${it.lastScanView}"/>
       <j:set var="ring" value="${it.ringFor(summary)}"/>
       <j:set var="panel" value="${it.panel}"/>
       <div class="ha-page">
-       <div class="ha-layout">
-        <nav class="ha-nav" aria-label="${%Hygiene Auditor}">
-          <a href="${rootURL}/manage/hygiene-auditor/" aria-current="page">${%Overview}</a>
-          <a href="#findings">${%Findings}</a>
-          <j:if test="${it.canConfigure}">
-            <a href="${rootURL}/manage/configure">${%Settings and ignore rules}</a>
-          </j:if>
-        </nav>
-        <div class="ha-content">
-
         <header class="ha-top">
           <div>
-            <h1 class="ha-h1">${%Controller hygiene}</h1>
             <p class="ha-subtitle" role="status">
               <j:choose>
                 <j:when test="${summary.scanRunning}">
@@ -48,17 +36,14 @@
           </div>
 
           <div class="ha-top-actions">
-            <details class="ha-menu">
-              <summary class="jenkins-button">${%Export}</summary>
-              <div class="ha-menu-list">
-                <a href="exportCsv?${panel.exportQuery}">${%Findings as CSV}</a>
-                <a href="exportJson?${panel.exportQuery}">${%Findings as JSON}</a>
-                <div class="ha-menu-head">${%Removal plan}</div>
-                <a href="removalPlan?format=groovy">${%Groovy script}</a>
-                <a href="removalPlan?format=cli">${%Shell commands}</a>
-                <a href="removalPlan?format=checklist">${%Checklist}</a>
-              </div>
-            </details>
+            <l:overflowButton text="${%Export}" icon="symbol-download-outline plugin-ionicons-api" tooltip="${%Export}">
+              <dd:item href="exportCsv?${panel.exportQuery}" text="${%Findings as CSV}" icon="symbol-document-text-outline plugin-ionicons-api"/>
+              <dd:item href="exportJson?${panel.exportQuery}" text="${%Findings as JSON}" icon="symbol-json plugin-hygiene-auditor"/>
+              <dd:header text="${%Removal plan}"/>
+              <dd:item href="removalPlan?format=groovy" text="${%Groovy script}" icon="symbol-code-working-outline plugin-ionicons-api"/>
+              <dd:item href="removalPlan?format=cli" text="${%Shell commands}" icon="symbol-terminal-outline plugin-ionicons-api"/>
+              <dd:item href="removalPlan?format=checklist" text="${%Checklist}" icon="symbol-list-outline plugin-ionicons-api"/>
+            </l:overflowButton>
             <j:if test="${it.canConfigure}">
               <a href="${rootURL}/manage/configure" class="jenkins-button">${%Settings}</a>
             </j:if>
@@ -67,7 +52,7 @@
                 <j:when test="${summary.scanRunning}">
                   <f:form method="post" action="cancel" name="cancel">
                     <input type="hidden" name="fromUi" value="true"/>
-                    <button type="submit" class="jenkins-button jenkins-button--destructive">${%Cancel scan}</button>
+                    <button type="submit" class="jenkins-button jenkins-!-destructive-color">${%Cancel scan}</button>
                   </f:form>
                 </j:when>
                 <j:otherwise>
@@ -131,9 +116,6 @@
             </section>
           </aside>
         </div>
-        </div>
-       </div>
       </div>
-    </l:main-panel>
-  </l:layout>
+  </l:settings-subpage>
 </j:jelly>
