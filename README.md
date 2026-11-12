@@ -132,6 +132,8 @@ itself never deletes anything. The button is shown only when the object still ex
 
 Findings can be **acknowledged**, or **ignored with a reason** and an optional snooze. A snooze that expires reopens
 the finding. A finding that is no longer observed becomes **resolved** and is removed after the retention period.
+Click a row to see why it was flagged; once you have acknowledged or ignored a finding, its page shows that decision
+instead of the suggested action.
 
 ![Dashboard](docs/images/dashboard.png)
 
@@ -178,6 +180,8 @@ echo "open: ${r.open}, high: ${r.high}, new: ${r.created}"
 `categories` (default: all) and `failOnHigh` (default `false`; fails the build if any open HIGH-severity finding
 exists in the scanned categories). The step needs `Hygiene Auditor/Scan` for the build's identity, waits for a scan
 that is already running, stops its own scan if the build is aborted, and returns only counts.
+The returned map has `scanId`, `state`, `open`, `high`, `created` and `resolved`. The step is also available in the
+Pipeline Syntax snippet generator, where several categories are entered comma-separated (`JOBS, CREDENTIALS`).
 
 ### REST
 
@@ -244,8 +248,9 @@ build. Invalid values (a negative threshold, a bad regex, a rule that would matc
 rejected with a clear message and leave the previous configuration in place.
 
 An **ignore rule** matches when *every* field you set matches: `category`, `type` (`*` wildcard), `subject` (a regex,
-matched against a credential's id, otherwise the subject name), `folder` (the folder and everything below it). Matching
-findings are never recorded. A regex that takes longer than 50 ms to evaluate counts as "no match" and is logged.
+matched against a credential's id, otherwise the subject name), `folder` (the folder and everything below it).
+`category` is one of `JOBS`, `AGENTS`, `CREDENTIALS`, `SHARED_LIBRARIES`, `PLUGINS`, and `type` is a finding type such as
+`credential.unused` or `library.*`; every field has help in the settings form. Matching findings are never recorded. A regex that takes longer than 50 ms to evaluate counts as "no match" and is logged.
 
 ## Data and privacy
 
