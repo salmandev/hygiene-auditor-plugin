@@ -1,5 +1,5 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:l="/lib/layout">
   <j:set var="s" value="${it.selected}"/>
   <section class="ha-card ha-panel" aria-label="${%Selected finding}">
     <j:choose>
@@ -11,7 +11,7 @@
         <p class="ha-muted ha-panel-sub">${s.typeLabel} · <span class="ha-sev ha-sev-${s.severity.toLowerCase()}">${s.severityLabel} ${%severity}</span></p>
 
         <j:if test="${s.status == 'IGNORED' or s.status == 'ACKNOWLEDGED'}">
-          <p class="ha-callout ha-decision ha-decision-${s.status.toLowerCase()}" role="status"><strong>${s.statusLabel}</strong><j:if test="${s.statusReason != null}"> <span class="ha-sep">—</span> ${s.statusReason}</j:if></p>
+          <div class="jenkins-alert ${s.status == 'ACKNOWLEDGED' ? 'jenkins-alert-success' : 'jenkins-alert-info'}" role="status"><strong>${s.statusLabel}</strong><j:if test="${s.statusReason != null}"> <span class="ha-sep">—</span> ${s.statusReason}</j:if></div>
         </j:if>
 
         <h3>${%Why we think it is unused}</h3>
@@ -36,7 +36,7 @@
             </f:form>
           </j:if>
           <j:if test="${s.subjectPath != null}">
-            <a class="jenkins-button" href="${rootURL}/${s.subjectPath}" target="_blank" rel="noopener">${s.subjectLinkLabel} ↗</a>
+            <a class="jenkins-button" href="${rootURL}/${s.subjectPath}" target="_blank" rel="noopener">${s.subjectLinkLabel}<l:icon src="symbol-open-outline plugin-ionicons-api"/></a>
           </j:if>
           <j:if test="${it.global and s.status != 'IGNORED'}">
             <a class="jenkins-button jenkins-button--primary" href="plan/?format=${s.removalSupported ? 'groovy' : 'checklist'}&amp;id=${s.id}" target="_blank" rel="noopener">${%Removal plan}</a>

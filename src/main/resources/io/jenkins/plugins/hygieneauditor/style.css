@@ -159,12 +159,11 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 16px 28px; margin: 0; padding: 20px; }
 .ha-facts dt { font-size: 12px; color: var(--ha-muted); margin: 0; }
 .ha-facts dd { margin: 3px 0 0; font-weight: 600; font-size: 14px; word-break: break-word; }
-.ha-callout { margin: 0 20px 20px; padding: 14px 16px; border-radius: 12px; background: var(--ha-selected); border: 1px solid color-mix(in srgb, var(--ha-accent-line) 30%, transparent); font-size: 14px; line-height: 1.5; }
 .ha-section-title { font-size: 18px; font-weight: 700; margin: 24px 0 10px; }
 .ha-weight { display: inline-block; min-width: 2.6rem; text-align: center; padding: 1px 8px; border-radius: 8px; font-variant-numeric: tabular-nums; font-weight: 700; font-size: 13px; background: var(--ha-low-bg); color: var(--ha-low-fg); }
 .ha-weight-pos { background: color-mix(in srgb, var(--ha-ok) 16%, transparent); color: var(--ha-pos-fg); }
 .ha-weight-neg { background: var(--ha-high-bg); color: var(--ha-high-fg); }
-.ha-form { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: end; padding: 20px; }
+.ha-form { display: grid; gap: 12px; padding: 20px; }
 .ha-form label { display: block; font-size: 12px; margin-bottom: 4px; color: var(--ha-muted); }
 
 /* ---- responsive */
@@ -190,7 +189,7 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 .ha-side .ha-panel > h3:first-child { margin-top: 0; }
 .ha-side .ha-panel > .ha-note:first-of-type { margin-top: 0; }
 .ha-form small { display: block; margin-top: 4px; font-size: 12px; }
-.ha-form .jenkins-input { width: 100%; min-width: 12rem; }
+.ha-form .jenkins-input, .ha-form .jenkins-select { width: 100%; }
 .ha-side .ha-panel > h3:first-child { margin-top: 0; }
 .ha-linkrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 0 20px 20px; font-size: 13px; }
 
@@ -216,11 +215,11 @@ a.ha-metric:hover { border-color: var(--ha-border-strong); }
 
 /* a whole row selects its finding (rows.js); the link inside still works without script */
 .ha-table-rows tbody tr.ha-row { cursor: pointer; }
-.ha-decision { font-size: 15px; }
-.ha-decision-title { font-size: 17px; }
-.ha-decision-ignored { background: var(--ha-low-bg); border-color: var(--ha-border-strong); }
-.ha-decision-acknowledged { background: color-mix(in srgb, var(--ha-ok) 14%, transparent); border-color: color-mix(in srgb, var(--ha-ok) 40%, transparent); }
 
 /* before Jenkins lets a subpage ask for the wide layout (it can on the newest LTS), use the room that is there */
 .app-settings-container__inner:has(.ha-page) { max-width: none; }
 .app-page-body:has(.ha-page) { max-width: 1700px; }
+
+/* Jenkins banners inside cards and the side panel */
+.ha-card > .jenkins-alert { margin: 0 20px 20px; }
+.ha-panel .jenkins-alert { margin: 12px 0 0; }

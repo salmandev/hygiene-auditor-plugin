@@ -27,19 +27,19 @@
               </dl>
               <j:choose>
                 <j:when test="${it.status == 'IGNORED' or it.status == 'ACKNOWLEDGED'}">
-                  <div class="ha-callout ha-decision ha-decision-${it.status.toLowerCase()}" role="status">
-                    <strong class="ha-decision-title"><j:choose><j:when test="${it.status == 'IGNORED'}">${%This finding is ignored}</j:when><j:otherwise>${%This finding is acknowledged}</j:otherwise></j:choose></strong>
+                  <div class="jenkins-alert ${it.status == 'ACKNOWLEDGED' ? 'jenkins-alert-success' : 'jenkins-alert-info'}" role="status">
+                    <strong><j:choose><j:when test="${it.status == 'IGNORED'}">${%This finding is ignored}</j:when><j:otherwise>${%This finding is acknowledged}</j:otherwise></j:choose></strong>
                     <j:if test="${it.statusReason != null}"><br/>${it.statusReason}</j:if>
-                    <j:if test="${it.snoozeUntil != null}"><br/><span class="ha-muted">${%Snoozed until} ${it.snoozeUntil}</span></j:if>
-                    <br/><span class="ha-muted">${%No action is needed. Change the decision on the right to review this finding again.}</span>
+                    <j:if test="${it.snoozeUntil != null}"><br/>${%Snoozed until} ${it.snoozeUntil}</j:if>
+                    <br/>${%No action is needed. Change the decision on the right to review this finding again.}
                   </div>
                 </j:when>
                 <j:otherwise>
-                  <div class="ha-callout"><strong>${%Suggested action}</strong><br/>${it.suggestedAction}</div>
+                  <div class="jenkins-alert jenkins-alert-info"><strong>${%Suggested action}</strong><br/>${it.suggestedAction}</div>
                 </j:otherwise>
               </j:choose>
               <j:if test="${it.subjectPath != null}">
-                <div class="ha-linkrow"><a class="jenkins-button" href="${rootURL}/${it.subjectPath}" target="_blank" rel="noopener">${it.subjectLinkLabel} ↗</a>
+                <div class="ha-linkrow"><a class="jenkins-button" href="${rootURL}/${it.subjectPath}" target="_blank" rel="noopener">${it.subjectLinkLabel}<l:icon src="symbol-open-outline plugin-ionicons-api"/></a>
                 <span class="ha-muted">${%Jenkins asks you to confirm there. This plugin never deletes anything.}</span></div>
               </j:if>
             </section>

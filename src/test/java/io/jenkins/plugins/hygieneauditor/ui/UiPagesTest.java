@@ -157,8 +157,8 @@ class UiPagesTest {
         assertEquals("planned decommission", f.statusReason());
         assertTrue(after.asNormalizedText().contains("planned decommission"));
         assertNotNull(
-                after.getFirstByXPath("//div[contains(@class,'ha-decision-ignored')]"),
-                "the decision is a prominent callout");
+                after.getFirstByXPath("//div[contains(@class,'jenkins-alert-info')][@role='status']"),
+                "the decision is a Jenkins banner");
         assertTrue(after.asNormalizedText().contains("This finding is ignored"));
         assertFalse(after.asNormalizedText().contains("Suggested action"), "a decision replaces the suggestion");
     }
